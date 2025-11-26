@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, ChangeEvent } from "react";
+import React, { useState, useRef, ChangeEvent, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { GoogleGenAI } from "@google/genai";
 
@@ -41,13 +41,14 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // New State: View Mode (Preview vs Code)
-  const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
+  // New State: View Mode (Visual Editor vs Code)
+  const [viewMode, setViewMode] = useState<'visual' | 'code'>('visual');
 
   // --- Refs ---
   const htmlInputRef = useRef<HTMLInputElement>(null);
   const txtInputRef = useRef<HTMLInputElement>(null);
   const imgInputRef = useRef<HTMLInputElement>(null);
+  const editableDivRef = useRef<HTMLDivElement>(null);
 
   // --- Handlers ---
 
@@ -178,8 +179,8 @@ const App: React.FC = () => {
     setIsLoading(true);
     setError(null);
     setGeneratedHtml("");
-    // Switch to preview mode on new generation
-    setViewMode('preview');
+    // Switch to visual mode on new generation
+    setViewMode('visual');
 
     try {
       const ai = new GoogleGenAI({ apiKey });
@@ -225,6 +226,7 @@ const App: React.FC = () => {
         - Integre o texto gerado DENTRO da estrutura do Template HTML fornecido.
         - Substitua todas as chaves de variáveis (ex: ##Nome##) pelos valores fornecidos. Se o valor estiver vazio, remova a chave ou coloque um texto genérico adequado.
         - Não quebre o layout do template original (preserve CSS inline, tabelas, header/footer).
+        - Importante: Se o template original tiver CSS em <style>, mantenha-o.
         - Não use markdown na resposta final, apenas o código HTML.
       `;
 
@@ -263,6 +265,24 @@ const App: React.FC = () => {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
+
+  // Sync ContentEditable changes back to state
+  const handleVisualEdit = () => {
+    if (editableDivRef.current) {
+      setGeneratedHtml(editableDivRef.current.innerHTML);
+    }
+  };
+
+  // Effect to update div content when generatedHtml changes from outside (generation or code edit)
+  useEffect(() => {
+    if (editableDivRef.current && generatedHtml && viewMode === 'visual') {
+      // Only set if different to avoid cursor jumps during minor updates, 
+      // though major updates usually come from generation or mode switch.
+      if (editableDivRef.current.innerHTML !== generatedHtml) {
+        editableDivRef.current.innerHTML = generatedHtml;
+      }
+    }
+  }, [generatedHtml, viewMode]);
 
   return (
     <div className="app">
@@ -410,16 +430,16 @@ const App: React.FC = () => {
                 <>
                   <div className="tab-group">
                     <button 
-                      className={`tab-btn ${viewMode === 'preview' ? 'active' : ''}`}
-                      onClick={() => setViewMode('preview')}
+                      className={`tab-btn ${viewMode === 'visual' ? 'active' : ''}`}
+                      onClick={() => setViewMode('visual')}
                     >
-                      Visualizar
+                      Editor Visual
                     </button>
                     <button 
                       className={`tab-btn ${viewMode === 'code' ? 'active' : ''}`}
                       onClick={() => setViewMode('code')}
                     >
-                      Editar Código
+                      Código Fonte
                     </button>
                   </div>
                   <button className="btn-secondary" onClick={handleDownload}>
@@ -436,13 +456,17 @@ const App: React.FC = () => {
                 <p>O layout renderizado aparecerá aqui.</p>
                 <small>Carregue o HTML base e defina as variáveis para começar.</small>
               </div>
-            ) : viewMode === 'preview' ? (
-              <iframe 
-                title="Visualização do Email"
-                srcDoc={generatedHtml}
-                className="html-iframe"
-                sandbox="allow-same-origin allow-scripts"
-              />
+            ) : viewMode === 'visual' ? (
+              <div className="visual-editor-wrapper">
+                 <div className="visual-editor-notice">✏️ Modo Editor: Clique no texto para alterar o conteúdo.</div>
+                 <div 
+                    ref={editableDivRef}
+                    className="email-paper"
+                    contentEditable={true}
+                    onBlur={handleVisualEdit} // Save on blur to avoid cursor issues
+                    suppressContentEditableWarning={true}
+                 />
+              </div>
             ) : (
               <textarea 
                 className="code-editor"

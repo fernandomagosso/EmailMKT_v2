@@ -1,5 +1,4 @@
 
-
 :root {
   --vivo-purple: #660099;
   --vivo-light-purple: #A74AC7;
@@ -85,6 +84,9 @@ header {
 
 .output-panel {
   background-color: #eef;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 0; /* Remove padding bottom to let preview sit flush */
 }
 
 h2 {
@@ -316,8 +318,7 @@ h2 {
 
 .preview-container {
   flex-grow: 1;
-  background: #fff;
-  border: 1px solid #e0e0e0;
+  background: #e0e0e0;
   border-radius: 4px;
   position: relative;
   overflow: hidden;
@@ -325,11 +326,41 @@ h2 {
   flex-direction: column;
 }
 
-.html-iframe {
+/* Visual Editor Styles */
+.visual-editor-wrapper {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-y: auto;
+  padding: 20px;
+  background-image: radial-gradient(#ccc 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.visual-editor-notice {
+  background: rgba(102, 0, 153, 0.8);
+  color: white;
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.email-paper {
+  background: white;
   width: 100%;
-  height: 100%;
-  border: none;
-  display: block;
+  max-width: 650px; /* Standard Email Width */
+  min-height: 800px;
+  padding: 0; /* Email templates usually handle their own padding */
+  box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+  outline: none;
+  overflow: hidden; /* Let content determine height */
+}
+
+.email-paper:focus {
+  box-shadow: 0 0 0 4px rgba(102, 0, 153, 0.3);
 }
 
 .code-editor {
@@ -351,7 +382,7 @@ h2 {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: #999;
+  color: #666;
   text-align: center;
 }
 
