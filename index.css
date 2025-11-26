@@ -92,9 +92,10 @@ header {
 h2 {
   margin: 0 0 1rem 0;
   color: var(--vivo-purple);
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   border-bottom: 2px solid var(--vivo-gray);
   padding-bottom: 0.5rem;
+  font-weight: 700;
 }
 
 /* Sections */
@@ -261,6 +262,18 @@ h2 {
   cursor: not-allowed;
 }
 
+/* Special AI Button Style */
+.ai-btn {
+  background: linear-gradient(135deg, #660099 0%, #A74AC7 100%);
+  box-shadow: 0 4px 15px rgba(102, 0, 153, 0.3);
+}
+
+.ai-btn:hover {
+  background: linear-gradient(135deg, #7b0bb5 0%, #ba63d6 100%);
+  transform: translateY(-1px);
+}
+
+
 .btn-secondary {
   background-color: var(--white);
   border: 1px solid var(--vivo-purple);
@@ -346,6 +359,7 @@ h2 {
   font-size: 0.8rem;
   margin-bottom: 10px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: 10;
 }
 
 .email-paper {

@@ -68,7 +68,8 @@ const App: React.FC = () => {
       }
     };
     reader.onerror = () => setError("Falha ao ler o arquivo HTML.");
-    reader.readAsText(file);
+    // Force UTF-8 to avoid special character issues
+    reader.readAsText(file, "UTF-8");
   };
 
   // 2. Variables Management
@@ -133,7 +134,8 @@ const App: React.FC = () => {
       }
     };
     reader.onerror = () => setError("Falha ao ler o arquivo de variáveis.");
-    reader.readAsText(file);
+    // Force UTF-8
+    reader.readAsText(file, "UTF-8");
   };
 
   // 3. Image Upload
@@ -159,10 +161,45 @@ const App: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
-  // 4. Generation Logic
-  const handleGenerate = async () => {
-    if (!htmlTemplate) {
-      setError("Obrigatório: Faça o upload de um template HTML base.");
+  // --- LIVE PREVIEW LOGIC ---
+  // Atualiza o HTML gerado automaticamente quando o template, variáveis ou imagem mudam.
+  // Isso permite visualização imediata sem chamar a IA.
+  useEffect(() => {
+    if (!htmlTemplate) return;
+
+    let currentDraft = htmlTemplate;
+
+    // 1. Substituição de Variáveis (Simples String Replace)
+    variables.forEach(v => {
+      if (v.key) {
+        // Escapa caracteres especiais para regex, caso necessário
+        const regex = new RegExp(v.key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+        currentDraft = currentDraft.replace(regex, v.value); // Se vazio, remove ou mantém vazio
+      }
+    });
+
+    // 2. Injeção de Imagem (Local)
+    if (imageBase64) {
+      const imgTag = `<img src="${imageBase64}" style="width: ${imageWidth}%; max-width: 100%; height: auto; display: block; margin: 20px auto;" alt="Destaque" class="injected-img" />`;
+      
+      // Tenta inserir logo após a abertura do body ou container principal
+      // Se tiver uma tag <main>, insere no começo dela, senão <body>, senão prepend.
+      if (currentDraft.includes('<div class="main-content">')) {
+         currentDraft = currentDraft.replace('<div class="main-content">', `<div class="main-content">${imgTag}`);
+      } else if (currentDraft.includes('<body>')) {
+         currentDraft = currentDraft.replace('<body>', `<body>${imgTag}`);
+      } else {
+         currentDraft = imgTag + currentDraft;
+      }
+    }
+
+    setGeneratedHtml(currentDraft);
+  }, [htmlTemplate, variables, imageBase64, imageWidth]);
+
+  // 4. AI Refinement Logic (Opt-in)
+  const handleAiRefinement = async () => {
+    if (!generatedHtml) {
+      setError("Obrigatório: Carregue um template primeiro.");
       return;
     }
 
@@ -178,56 +215,37 @@ const App: React.FC = () => {
 
     setIsLoading(true);
     setError(null);
-    setGeneratedHtml("");
-    // Switch to visual mode on new generation
-    setViewMode('visual');
-
+    
     try {
       const ai = new GoogleGenAI({ apiKey });
       
-      const variablesString = variables
-        .filter(v => v.key.trim() !== "")
-        .map(v => `${v.key}: ${v.value}`)
-        .join("\n");
-      
-      const imageInstruction = imageBase64 
-        ? `INSTRUÇÃO DE IMAGEM: O usuário forneceu uma imagem promocional. Você OBRIGATORIAMENTE deve inserir a tag <img src="${imageBase64}" style="width: ${imageWidth}%; max-width: 100%; height: auto; display: block; margin: 20px auto;" alt="Imagem da Campanha" />. Escolha o melhor lugar para ela dentro do HTML (logo após o header ou antes do CTA). Mantenha o base64 exato.` 
-        : "Nenhuma imagem adicional foi fornecida.";
+      const currentContent = editableDivRef.current?.innerHTML || generatedHtml;
 
       const prompt = `
         CONTEXTO: Você é um Especialista em Marketing Direto e Desenvolvedor Front-end da Vivo.
-        OBJETIVO: Criar o corpo de um e-mail HTML para comunicar um reajuste de preço (Banda Larga/Voz) de forma transparente e ética.
+        TAREFA: Otimizar e Refinar o código HTML de e-mail fornecido abaixo.
 
-        INPUTS:
-        1. TEMPLATE HTML (Estrutura Base):
+        INPUT (HTML ATUAL):
         \`\`\`html
-        ${htmlTemplate}
+        ${currentContent}
         \`\`\`
-
-        2. VARIÁVEIS DO CLIENTE:
-        ${variablesString}
-
-        3. MÍDIA:
-        ${imageInstruction}
         
-        4. INSTRUÇÕES ADICIONAIS DO USUÁRIO (Prioridade Alta):
-        ${customInstructions}
+        INSTRUÇÕES DE USUÁRIO (O que melhorar):
+        ${customInstructions || "Melhore a persuasão do texto, corrija erros de português e torne o tom mais empático e transparente, mantendo a estrutura visual."}
 
-        DIRETRIZES DE CONTEÚDO (Copywriting):
-        - Tom de voz: Transparente, Respeitoso, Direto (Sem "corporatês" excessivo).
-        - Estrutura do Texto:
-          1. Abertura clara explicando o motivo do contato.
-          2. Detalhamento do reajuste (Use a variável de Delta se disponível).
-          3. Benefícios do serviço que justificam a continuidade (Use dados fictícios auditáveis se necessário).
-          4. CTA claro para tirar dúvidas ou ver detalhes da conta.
-        
-        DIRETRIZES TÉCNICAS (Output):
-        - Retorne O CÓDIGO HTML COMPLETO.
-        - Integre o texto gerado DENTRO da estrutura do Template HTML fornecido.
-        - Substitua todas as chaves de variáveis (ex: ##Nome##) pelos valores fornecidos. Se o valor estiver vazio, remova a chave ou coloque um texto genérico adequado.
-        - Não quebre o layout do template original (preserve CSS inline, tabelas, header/footer).
-        - Importante: Se o template original tiver CSS em <style>, mantenha-o.
-        - Não use markdown na resposta final, apenas o código HTML.
+        DIRETRIZES TÉCNICAS E DE FORMATAÇÃO:
+        - IMPORTANTE: Retorne os caracteres acentuados (ã, é, ç, ê) diretamente em formato UTF-8, NÃO use entidades HTML (como &atilde;, &ccedil;). Isso é vital para o editor visual funcionar corretamente.
+        - Mantenha a estrutura HTML intacta, apenas altere os textos dentro das tags.
+        - Se houver placeholders, preencha com conteúdo realista da Vivo.
+        - Certifique-se de que o português esteja no padrão Brasil (pt-BR).
+
+        DIRETRIZES DE MARKETING ÉTICO:
+        - Foco em transparência (explicar mudanças de preço claramente).
+        - Benefícios auditáveis.
+        - Sem promessas falsas.
+
+        OUTPUT ESPERADO:
+        - Retorne APENAS o código HTML corrigido/melhorado.
       `;
 
       const response = await ai.models.generateContent({
@@ -239,13 +257,15 @@ const App: React.FC = () => {
       cleanHtml = cleanHtml.replace(/^```html\s*/i, '').replace(/```$/, '');
 
       setGeneratedHtml(cleanHtml);
+      // Força atualização visual se necessário
+      if(editableDivRef.current) editableDivRef.current.innerHTML = cleanHtml;
 
     } catch (err: unknown) {
       console.error(err);
       if (err instanceof Error) {
-        setError(`Erro na geração: ${err.message}`);
+        setError(`Erro na IA: ${err.message}`);
       } else {
-        setError("Ocorreu um erro desconhecido durante a geração.");
+        setError("Ocorreu um erro desconhecido.");
       }
     } finally {
       setIsLoading(false);
@@ -253,9 +273,31 @@ const App: React.FC = () => {
   };
 
   const handleDownload = () => {
-    if (!generatedHtml) return;
+    let contentToDownload = editableDivRef.current?.innerHTML || generatedHtml;
+    if (!contentToDownload) return;
     
-    const blob = new Blob([generatedHtml], { type: "text/html" });
+    // Assegura que o HTML tenha a meta charset para pt-BR
+    if (!contentToDownload.includes('<meta charset="utf-8"')) {
+       // Se for um fragmento, envolve em estrutura básica
+       if (!contentToDownload.includes('<html')) {
+          contentToDownload = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vivo Campanha</title>
+</head>
+<body style="margin:0; padding:0; font-family: Arial, sans-serif;">
+${contentToDownload}
+</body>
+</html>`;
+       } else {
+          // Se já for HTML completo, tenta injetar no head
+          contentToDownload = contentToDownload.replace('<head>', '<head>\n<meta charset="utf-8">');
+       }
+    }
+
+    const blob = new Blob([contentToDownload], { type: "text/html;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -266,23 +308,9 @@ const App: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  // Sync ContentEditable changes back to state
   const handleVisualEdit = () => {
-    if (editableDivRef.current) {
-      setGeneratedHtml(editableDivRef.current.innerHTML);
-    }
+    // Sincroniza edições manuais
   };
-
-  // Effect to update div content when generatedHtml changes from outside (generation or code edit)
-  useEffect(() => {
-    if (editableDivRef.current && generatedHtml && viewMode === 'visual') {
-      // Only set if different to avoid cursor jumps during minor updates, 
-      // though major updates usually come from generation or mode switch.
-      if (editableDivRef.current.innerHTML !== generatedHtml) {
-        editableDivRef.current.innerHTML = generatedHtml;
-      }
-    }
-  }, [generatedHtml, viewMode]);
 
   return (
     <div className="app">
@@ -294,11 +322,11 @@ const App: React.FC = () => {
       <main className="container">
         {/* Left Panel: Configuration */}
         <div className="card config-panel">
-          <h2>Configuração da Campanha</h2>
+          <h2>1. Estrutura & Dados</h2>
           
           {/* 1. HTML Base */}
           <div className="section-group">
-            <label className="section-title">1. Template Base (HTML)</label>
+            <label className="section-title">Template HTML</label>
             <div 
               className={`file-upload small ${htmlTemplate ? 'active' : ''}`}
               onClick={() => htmlInputRef.current?.click()}
@@ -311,16 +339,19 @@ const App: React.FC = () => {
                 accept=".html,.htm"
               />
               <span role="img" aria-label="code">🌐</span>
-              <span>{htmlFileName || "Carregar HTML Base (Header/Footer)"}</span>
+              <span>{htmlFileName || "Carregar Layout Base (HTML)"}</span>
+            </div>
+            <div style={{fontSize: '0.75rem', color: '#666', marginTop: '4px'}}>
+              Certifique-se que o arquivo esteja em UTF-8.
             </div>
           </div>
 
           {/* 2. Variables */}
           <div className="section-group">
             <div className="flex-header">
-              <label className="section-title">2. Dados Variáveis</label>
+              <label className="section-title">Dados Variáveis</label>
               <button className="btn-text" onClick={() => txtInputRef.current?.click()}>
-                📥 Importar .txt
+                Importar .txt
               </button>
               <input 
                 type="file" 
@@ -361,7 +392,7 @@ const App: React.FC = () => {
 
           {/* 3. Image Upload */}
           <div className="section-group">
-            <label className="section-title">3. Imagem Promocional</label>
+            <label className="section-title">Imagem de Destaque</label>
             <div 
               className={`file-upload small ${imageBase64 ? 'active' : ''}`}
               onClick={() => imgInputRef.current?.click()}
@@ -374,12 +405,12 @@ const App: React.FC = () => {
                 accept="image/png, image/jpeg, image/gif"
               />
               <span role="img" aria-label="img">🖼️</span>
-              <span>{imageName || "Carregar Imagem (Opcional)"}</span>
+              <span>{imageName || "Selecionar Imagem"}</span>
             </div>
             
             {imageBase64 && (
               <div className="image-controls">
-                <label>Largura da Imagem no Email: {imageWidth}%</label>
+                <label>Tamanho: {imageWidth}%</label>
                 <input 
                   type="range" 
                   min="10" 
@@ -391,13 +422,17 @@ const App: React.FC = () => {
             )}
           </div>
 
+          <hr style={{border: 'none', borderTop: '1px solid #eee', margin: '1.5rem 0'}} />
+
+          <h2>2. Inteligência Artificial (Opcional)</h2>
+          
           {/* 4. Prompt Customization (New) */}
           <div className="section-group">
-            <label className="section-title">4. Ajuste de Prompt (IA)</label>
+            <label className="section-title">Instruções para Otimização</label>
             <textarea
               className="text-area-input"
               rows={3}
-              placeholder="Ex: 'Seja mais formal', 'Enfatize o bônus de dados', 'Fale sobre o app Vivo Fibra'..."
+              placeholder="Ex: 'Torne o texto mais curto', 'Adicione um tom de urgência ética', 'Corrija gramática'..."
               value={customInstructions}
               onChange={(e) => setCustomInstructions(e.target.value)}
             />
@@ -406,17 +441,17 @@ const App: React.FC = () => {
           {error && <div className="error-msg" role="alert">{error}</div>}
 
           <button 
-            className="btn-primary" 
-            onClick={handleGenerate} 
-            disabled={isLoading}
+            className="btn-primary ai-btn" 
+            onClick={handleAiRefinement} 
+            disabled={isLoading || !htmlTemplate}
           >
             {isLoading ? (
               <span className="flex-center">
                 <span className="loading-spinner"></span>
-                Processando...
+                Otimizando...
               </span>
             ) : (
-              "Gerar E-mail Completo"
+              "✨ Melhorar Conteúdo com IA"
             )}
           </button>
         </div>
@@ -424,7 +459,7 @@ const App: React.FC = () => {
         {/* Right Panel: Output */}
         <div className="card output-panel">
           <div className="panel-header">
-            <h2>Preview Final</h2>
+            <h2>Visualização em Tempo Real</h2>
             <div className="actions">
               {generatedHtml && (
                 <>
@@ -433,17 +468,17 @@ const App: React.FC = () => {
                       className={`tab-btn ${viewMode === 'visual' ? 'active' : ''}`}
                       onClick={() => setViewMode('visual')}
                     >
-                      Editor Visual
+                      Visual
                     </button>
                     <button 
                       className={`tab-btn ${viewMode === 'code' ? 'active' : ''}`}
                       onClick={() => setViewMode('code')}
                     >
-                      Código Fonte
+                      Código
                     </button>
                   </div>
                   <button className="btn-secondary" onClick={handleDownload}>
-                    💾 Baixar HTML
+                    💾 Baixar
                   </button>
                 </>
               )}
@@ -453,25 +488,30 @@ const App: React.FC = () => {
           <div className="preview-container">
             {!generatedHtml ? (
               <div className="placeholder-text">
-                <p>O layout renderizado aparecerá aqui.</p>
-                <small>Carregue o HTML base e defina as variáveis para começar.</small>
+                <div style={{fontSize: '3rem', marginBottom: '1rem'}}>📄</div>
+                <p>Carregue um arquivo HTML para começar.</p>
+                <small>O preview aparecerá aqui instantaneamente.</small>
               </div>
             ) : viewMode === 'visual' ? (
               <div className="visual-editor-wrapper">
-                 <div className="visual-editor-notice">✏️ Modo Editor: Clique no texto para alterar o conteúdo.</div>
+                 <div className="visual-editor-notice">Modo Editor: Clique e digite para alterar o texto.</div>
                  <div 
                     ref={editableDivRef}
                     className="email-paper"
                     contentEditable={true}
-                    onBlur={handleVisualEdit} // Save on blur to avoid cursor issues
+                    onBlur={handleVisualEdit}
                     suppressContentEditableWarning={true}
+                    dangerouslySetInnerHTML={{ __html: generatedHtml }} // Initial render logic
                  />
               </div>
             ) : (
               <textarea 
                 className="code-editor"
-                value={generatedHtml}
-                onChange={(e) => setGeneratedHtml(e.target.value)}
+                value={editableDivRef.current?.innerHTML || generatedHtml}
+                onChange={(e) => {
+                   setGeneratedHtml(e.target.value);
+                   if(editableDivRef.current) editableDivRef.current.innerHTML = e.target.value;
+                }}
                 spellCheck={false}
               />
             )}
