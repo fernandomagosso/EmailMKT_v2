@@ -1,17 +1,15 @@
-
 import React, { useState, useRef, ChangeEvent } from "react";
 import { createRoot } from "react-dom/client";
 import { GoogleGenAI } from "@google/genai";
 
-// Declaração segura para variáveis de ambiente
+// Declaração para garantir que o TypeScript entenda o process.env injetado
 declare global {
-  interface Window {
-    process?: {
-      env?: {
-        [key: string]: string | undefined;
-      };
+  var process: {
+    env: {
+      API_KEY: string;
+      [key: string]: any;
     };
-  }
+  };
 }
 
 // --- Types ---
@@ -52,7 +50,6 @@ const App: React.FC = () => {
 
     const reader = new FileReader();
     reader.onload = (e) => {
-      // TypeScript Safe Casting for FileReader result
       const target = e.target as FileReader;
       const text = target.result;
       if (typeof text === "string") {
@@ -160,11 +157,11 @@ const App: React.FC = () => {
       return;
     }
 
-    // Acesso seguro à chave de API via process.env
-    // @ts-ignore - process é injetado pelo bundler/ambiente
+    // A chave da API é obtida automaticamente do ambiente seguro
     const apiKey = process.env.API_KEY;
+    
     if (!apiKey) {
-      setError("Erro de Configuração: API Key não encontrada no ambiente.");
+      setError("Erro de Configuração: API Key não detectada no ambiente.");
       return;
     }
 
