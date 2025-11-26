@@ -1,4 +1,5 @@
 
+
 :root {
   --vivo-purple: #660099;
   --vivo-light-purple: #A74AC7;
@@ -105,6 +106,22 @@ h2 {
   color: var(--text-dark);
   font-size: 0.9rem;
   margin-bottom: 0.5rem;
+}
+
+.text-area-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.text-area-input:focus {
+  border-color: var(--vivo-purple);
+  outline: none;
 }
 
 .flex-header {
@@ -263,6 +280,38 @@ h2 {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.tab-group {
+  display: flex;
+  background: #fff;
+  border-radius: 4px;
+  padding: 2px;
+  border: 1px solid #ddd;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-radius: 3px;
+  color: #666;
+}
+
+.tab-btn.active {
+  background-color: var(--vivo-purple);
+  color: white;
+  font-weight: 500;
 }
 
 .preview-container {
@@ -272,6 +321,8 @@ h2 {
   border-radius: 4px;
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .html-iframe {
@@ -279,6 +330,20 @@ h2 {
   height: 100%;
   border: none;
   display: block;
+}
+
+.code-editor {
+  width: 100%;
+  height: 100%;
+  border: none;
+  padding: 1rem;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 0.85rem;
+  resize: none;
+  outline: none;
+  background-color: #f8f9fa;
+  color: #212529;
+  box-sizing: border-box;
 }
 
 .placeholder-text {

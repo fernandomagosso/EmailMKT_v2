@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, ChangeEvent } from "react";
 import { createRoot } from "react-dom/client";
 import { GoogleGenAI } from "@google/genai";
@@ -33,9 +34,15 @@ const App: React.FC = () => {
   const [imageName, setImageName] = useState<string>("");
   const [imageWidth, setImageWidth] = useState<number>(100);
 
+  // New State: Custom Prompt Instruction
+  const [customInstructions, setCustomInstructions] = useState<string>("");
+
   const [generatedHtml, setGeneratedHtml] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  // New State: View Mode (Preview vs Code)
+  const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
 
   // --- Refs ---
   const htmlInputRef = useRef<HTMLInputElement>(null);
@@ -159,19 +166,20 @@ const App: React.FC = () => {
     }
 
     // Tenta obter a chave do process (Node) ou window.process (Navegador com polyfill)
-    // Se você estiver rodando localmente sem build, certifique-se de configurar window.process.env.API_KEY no index.html
     const apiKey = typeof process !== 'undefined' && process.env && process.env.API_KEY
       ? process.env.API_KEY 
       : window.process?.env?.API_KEY;
     
     if (!apiKey) {
-      setError("Erro de Configuração: API Key não detectada. Se estiver rodando localmente, configure a chave no código.");
+      setError("Erro de Configuração: API Key não detectada.");
       return;
     }
 
     setIsLoading(true);
     setError(null);
     setGeneratedHtml("");
+    // Switch to preview mode on new generation
+    setViewMode('preview');
 
     try {
       const ai = new GoogleGenAI({ apiKey });
@@ -200,6 +208,9 @@ const App: React.FC = () => {
 
         3. MÍDIA:
         ${imageInstruction}
+        
+        4. INSTRUÇÕES ADICIONAIS DO USUÁRIO (Prioridade Alta):
+        ${customInstructions}
 
         DIRETRIZES DE CONTEÚDO (Copywriting):
         - Tom de voz: Transparente, Respeitoso, Direto (Sem "corporatês" excessivo).
@@ -305,7 +316,7 @@ const App: React.FC = () => {
                 <div key={index} className="variable-row">
                   <input 
                     type="text" 
-                    placeholder="Chave (ex: ##Nome##)"
+                    placeholder="Chave"
                     value={v.key}
                     onChange={(e) => handleVariableChange(index, 'key', e.target.value)}
                     className="var-key"
@@ -321,7 +332,6 @@ const App: React.FC = () => {
                     className="btn-icon" 
                     onClick={() => removeVariable(index)}
                     title="Remover campo"
-                    aria-label="Remover variável"
                   >×</button>
                 </div>
               ))}
@@ -361,6 +371,18 @@ const App: React.FC = () => {
             )}
           </div>
 
+          {/* 4. Prompt Customization (New) */}
+          <div className="section-group">
+            <label className="section-title">4. Ajuste de Prompt (IA)</label>
+            <textarea
+              className="text-area-input"
+              rows={3}
+              placeholder="Ex: 'Seja mais formal', 'Enfatize o bônus de dados', 'Fale sobre o app Vivo Fibra'..."
+              value={customInstructions}
+              onChange={(e) => setCustomInstructions(e.target.value)}
+            />
+          </div>
+
           {error && <div className="error-msg" role="alert">{error}</div>}
 
           <button 
@@ -385,15 +407,36 @@ const App: React.FC = () => {
             <h2>Preview Final</h2>
             <div className="actions">
               {generatedHtml && (
-                <button className="btn-secondary" onClick={handleDownload}>
-                  💾 Baixar HTML
-                </button>
+                <>
+                  <div className="tab-group">
+                    <button 
+                      className={`tab-btn ${viewMode === 'preview' ? 'active' : ''}`}
+                      onClick={() => setViewMode('preview')}
+                    >
+                      Visualizar
+                    </button>
+                    <button 
+                      className={`tab-btn ${viewMode === 'code' ? 'active' : ''}`}
+                      onClick={() => setViewMode('code')}
+                    >
+                      Editar Código
+                    </button>
+                  </div>
+                  <button className="btn-secondary" onClick={handleDownload}>
+                    💾 Baixar HTML
+                  </button>
+                </>
               )}
             </div>
           </div>
 
           <div className="preview-container">
-            {generatedHtml ? (
+            {!generatedHtml ? (
+              <div className="placeholder-text">
+                <p>O layout renderizado aparecerá aqui.</p>
+                <small>Carregue o HTML base e defina as variáveis para começar.</small>
+              </div>
+            ) : viewMode === 'preview' ? (
               <iframe 
                 title="Visualização do Email"
                 srcDoc={generatedHtml}
@@ -401,10 +444,12 @@ const App: React.FC = () => {
                 sandbox="allow-same-origin allow-scripts"
               />
             ) : (
-              <div className="placeholder-text">
-                <p>O layout renderizado aparecerá aqui.</p>
-                <small>Carregue o HTML base e defina as variáveis para começar.</small>
-              </div>
+              <textarea 
+                className="code-editor"
+                value={generatedHtml}
+                onChange={(e) => setGeneratedHtml(e.target.value)}
+                spellCheck={false}
+              />
             )}
           </div>
         </div>
