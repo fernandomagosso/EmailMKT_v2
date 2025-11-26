@@ -3,14 +3,16 @@ import React, { useState, useRef, ChangeEvent } from "react";
 import { createRoot } from "react-dom/client";
 import { GoogleGenAI } from "@google/genai";
 
-// --- TypeScript Declarations ---
-// Garante que o TS reconheça o process.env mesmo em ambiente web
-declare const process: {
-  env: {
-    API_KEY?: string;
-    [key: string]: string | undefined;
-  };
-};
+// Declaração segura para variáveis de ambiente
+declare global {
+  interface Window {
+    process?: {
+      env?: {
+        [key: string]: string | undefined;
+      };
+    };
+  }
+}
 
 // --- Types ---
 interface Variable {
@@ -49,8 +51,10 @@ const App: React.FC = () => {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (e: ProgressEvent<FileReader>) => {
-      const text = e.target?.result;
+    reader.onload = (e) => {
+      // TypeScript Safe Casting for FileReader result
+      const target = e.target as FileReader;
+      const text = target.result;
       if (typeof text === "string") {
         setHtmlTemplate(text);
         setHtmlFileName(file.name);
@@ -83,8 +87,10 @@ const App: React.FC = () => {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (e: ProgressEvent<FileReader>) => {
-      const text = e.target?.result;
+    reader.onload = (e) => {
+      const target = e.target as FileReader;
+      const text = target.result;
+      
       if (typeof text === "string") {
         // Parse format "Key: Value" or "Key=Value" per line
         const lines = text.split(/\r?\n/);
@@ -92,12 +98,10 @@ const App: React.FC = () => {
         
         lines.forEach(line => {
           if (line.trim()) {
-            // Support both ':' and '=' as separators
             const separatorIndex = line.indexOf(':') !== -1 ? line.indexOf(':') : line.indexOf('=');
             if (separatorIndex !== -1) {
               const key = line.substring(0, separatorIndex).trim();
               const value = line.substring(separatorIndex + 1).trim();
-              // Basic sanitization
               if (key) newVars.push({ key, value });
             }
           }
@@ -105,7 +109,6 @@ const App: React.FC = () => {
 
         if (newVars.length > 0) {
           setVariables(prev => {
-            // Merge strategy: Update existing keys, append new ones
             const combined = [...prev];
             newVars.forEach(nv => {
               const existingIndex = combined.findIndex(v => v.key === nv.key);
@@ -132,15 +135,15 @@ const App: React.FC = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith("image/")) {
       setError("Por favor, selecione apenas arquivos de imagem.");
       return;
     }
 
     const reader = new FileReader();
-    reader.onload = (e: ProgressEvent<FileReader>) => {
-      const result = e.target?.result;
+    reader.onload = (e) => {
+      const target = e.target as FileReader;
+      const result = target.result;
       if (typeof result === "string") {
         setImageBase64(result);
         setImageName(file.name);
@@ -157,7 +160,8 @@ const App: React.FC = () => {
       return;
     }
 
-    // Safe access to API Key with Typescript check
+    // Acesso seguro à chave de API via process.env
+    // @ts-ignore - process é injetado pelo bundler/ambiente
     const apiKey = process.env.API_KEY;
     if (!apiKey) {
       setError("Erro de Configuração: API Key não encontrada no ambiente.");
@@ -218,7 +222,6 @@ const App: React.FC = () => {
       });
 
       let cleanHtml = response.text || "";
-      // Sanitize AI markdown output if present
       cleanHtml = cleanHtml.replace(/^```html\s*/i, '').replace(/```$/, '');
 
       setGeneratedHtml(cleanHtml);
@@ -409,7 +412,6 @@ const App: React.FC = () => {
   );
 };
 
-// Ensure root element exists before mounting
 const container = document.getElementById("root");
 if (container) {
   const root = createRoot(container);
