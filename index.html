@@ -7,16 +7,29 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <script type="module" src="/index.tsx"></script>
-    <script type="importmap">
-    {
-      "imports": {
-        "react": "https://esm.sh/react@18.2.0",
-        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-        "@google/genai": "https://esm.run/@google/genai"
-      }
-    }
+    
+    <!-- Polyfill para process.env (evita crash em ambiente local) -->
+    <script>
+      window.process = {
+        env: {
+          API_KEY: '' // Se rodar localmente, você pode injetar a chave aqui ou via servidor
+        }
+      };
     </script>
+
+    <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.2.0",
+    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+    "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime",
+    "@google/genai": "https://esm.run/@google/genai",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/"
+  }
+}
+</script>
+    <script type="module" src="/index.tsx"></script>
   </head>
   <body>
     <div id="root"></div>

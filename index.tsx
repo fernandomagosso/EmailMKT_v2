@@ -4,12 +4,13 @@ import { GoogleGenAI } from "@google/genai";
 
 // Declaração para garantir que o TypeScript entenda o process.env injetado
 declare global {
-  var process: {
-    env: {
-      API_KEY: string;
-      [key: string]: any;
+  interface Window {
+    process?: {
+      env: {
+        [key: string]: string | undefined;
+      };
     };
-  };
+  }
 }
 
 // --- Types ---
@@ -157,11 +158,14 @@ const App: React.FC = () => {
       return;
     }
 
-    // A chave da API é obtida automaticamente do ambiente seguro
-    const apiKey = process.env.API_KEY;
+    // Tenta obter a chave do process (Node) ou window.process (Navegador com polyfill)
+    // Se você estiver rodando localmente sem build, certifique-se de configurar window.process.env.API_KEY no index.html
+    const apiKey = typeof process !== 'undefined' && process.env && process.env.API_KEY
+      ? process.env.API_KEY 
+      : window.process?.env?.API_KEY;
     
     if (!apiKey) {
-      setError("Erro de Configuração: API Key não detectada no ambiente.");
+      setError("Erro de Configuração: API Key não detectada. Se estiver rodando localmente, configure a chave no código.");
       return;
     }
 
