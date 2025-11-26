@@ -3,22 +3,19 @@ import React, { useState, useRef, ChangeEvent } from "react";
 import { createRoot } from "react-dom/client";
 import { GoogleGenAI } from "@google/genai";
 
+// --- TypeScript Declarations ---
+// Garante que o TS reconheça o process.env mesmo em ambiente web
+declare const process: {
+  env: {
+    API_KEY?: string;
+    [key: string]: string | undefined;
+  };
+};
+
 // --- Types ---
 interface Variable {
   key: string;
   value: string;
-}
-
-interface AppState {
-  htmlTemplate: string;
-  htmlFileName: string;
-  variables: Variable[];
-  imageBase64: string;
-  imageName: string;
-  imageWidth: number;
-  generatedHtml: string;
-  isLoading: boolean;
-  error: string | null;
 }
 
 const App: React.FC = () => {
@@ -160,8 +157,10 @@ const App: React.FC = () => {
       return;
     }
 
-    if (!process.env.API_KEY) {
-      setError("Erro de Configuração: API Key não encontrada.");
+    // Safe access to API Key with Typescript check
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) {
+      setError("Erro de Configuração: API Key não encontrada no ambiente.");
       return;
     }
 
@@ -170,7 +169,7 @@ const App: React.FC = () => {
     setGeneratedHtml("");
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const ai = new GoogleGenAI({ apiKey });
       
       const variablesString = variables
         .filter(v => v.key.trim() !== "")
