@@ -37,23 +37,24 @@ const PREDEFINED_TEMPLATES: Template[] = [
 <head>
 <meta charset="UTF-8">
 <style>
-  body { margin: 0; padding: 0; font-family: 'Arial', sans-serif; background-color: #f6f6f6; color: #333; }
-  .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-top: 5px solid #660099; }
-  .header { padding: 30px 40px; border-bottom: 1px solid #eee; }
-  .logo { color: #660099; font-size: 24px; font-weight: bold; }
-  .content { padding: 40px; line-height: 1.6; }
+  /* Prefixing classes to avoid conflict with main app styles */
+  .email-body { margin: 0; padding: 0; font-family: 'Arial', sans-serif; background-color: #f6f6f6; color: #333; }
+  .email-container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-top: 5px solid #660099; }
+  .email-header { padding: 30px 40px; border-bottom: 1px solid #eee; }
+  .email-logo { color: #660099; font-size: 24px; font-weight: bold; }
+  .email-content { padding: 40px; line-height: 1.6; }
   .alert-box { background-color: #f3e5f5; border-left: 4px solid #A74AC7; padding: 15px; margin: 20px 0; border-radius: 4px; }
   .old-price { text-decoration: line-through; color: #999; }
   .new-price { font-size: 1.2em; font-weight: bold; color: #660099; }
-  .footer { background-color: #333; color: #fff; padding: 20px; text-align: center; font-size: 12px; }
+  .email-footer { background-color: #333; color: #fff; padding: 20px; text-align: center; font-size: 12px; }
 </style>
 </head>
-<body>
-  <div class="container">
-    <div class="header">
-      <div class="logo">vivo</div>
+<body class="email-body">
+  <div class="email-container">
+    <div class="email-header">
+      <div class="email-logo">vivo</div>
     </div>
-    <div class="content">
+    <div class="email-content">
       <h2 style="color: #660099; margin-top: 0;">Atualização importante sobre sua conta</h2>
       <p>Olá, <strong>##NomeCliente##</strong>.</p>
       <p>Acreditamos na transparência total em nossa relação. Por isso, estamos entrando em contato para informar sobre o reajuste anual do seu plano.</p>
@@ -66,7 +67,7 @@ const PREDEFINED_TEMPLATES: Template[] = [
       <p>Este ajuste nos permite continuar investindo na expansão da fibra ótica e garantir a estabilidade que sua casa precisa.</p>
       <p>Qualquer dúvida, estamos à disposição em nossos canais oficiais.</p>
     </div>
-    <div class="footer">
+    <div class="email-footer">
       Vivo - Telefônica Brasil S.A.<br>
       Acesse o App Vivo para mais detalhes.
     </div>
@@ -83,22 +84,22 @@ const PREDEFINED_TEMPLATES: Template[] = [
 <head>
 <meta charset="UTF-8">
 <style>
-  body { margin: 0; padding: 0; font-family: 'Arial', sans-serif; background-color: #f6f6f6; }
-  .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
-  .header { background-color: #660099; padding: 30px 40px; text-align: left; }
-  .logo { color: white; font-size: 24px; font-weight: bold; text-decoration: none; }
-  .content { padding: 40px; color: #333333; line-height: 1.6; }
+  .email-body { margin: 0; padding: 0; font-family: 'Arial', sans-serif; background-color: #f6f6f6; }
+  .email-container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
+  .email-header { background-color: #660099; padding: 30px 40px; text-align: left; }
+  .email-logo { color: white; font-size: 24px; font-weight: bold; text-decoration: none; }
+  .email-content { padding: 40px; color: #333333; line-height: 1.6; }
   .h1 { color: #660099; font-size: 24px; margin-bottom: 20px; font-weight: bold; }
-  .footer { background-color: #333333; color: #999999; padding: 20px; text-align: center; font-size: 12px; }
-  .btn { display: inline-block; background-color: #660099; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 20px; }
+  .email-footer { background-color: #333333; color: #999999; padding: 20px; text-align: center; font-size: 12px; }
+  .email-btn { display: inline-block; background-color: #660099; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 20px; }
 </style>
 </head>
-<body>
-  <div class="container">
-    <div class="header">
-      <div class="logo">vivo</div>
+<body class="email-body">
+  <div class="email-container">
+    <div class="email-header">
+      <div class="email-logo">vivo</div>
     </div>
-    <div class="content">
+    <div class="email-content">
       <div class="h1">Olá, ##NomeCliente##</div>
       <p>Escrevemos hoje com transparência para falar sobre seus serviços.</p>
       <p>Este é um espaço para comunicado oficial da marca.</p>
@@ -113,9 +114,9 @@ const PREDEFINED_TEMPLATES: Template[] = [
       </table>
 
       <p>Estamos à disposição para tirar suas dúvidas.</p>
-      <a href="#" class="btn">Acessar Minha Vivo</a>
+      <a href="#" class="email-btn">Acessar Minha Vivo</a>
     </div>
-    <div class="footer">
+    <div class="email-footer">
       <p>Vivo - Telefônica Brasil S.A.<br>Este é um e-mail automático, por favor não responda.</p>
     </div>
   </div>
@@ -131,7 +132,7 @@ const PREDEFINED_TEMPLATES: Template[] = [
 <head>
 <meta charset="UTF-8">
 <style>
-  body { margin: 0; padding: 0; font-family: 'Arial', sans-serif; background-color: #eeeeee; }
+  .email-body { margin: 0; padding: 0; font-family: 'Arial', sans-serif; background-color: #eeeeee; }
   .wrapper { max-width: 600px; margin: 20px auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
   .banner { background-color: #A74AC7; height: 200px; display: flex; align-items: center; justify-content: center; color: white; text-align: center; }
   .main { padding: 30px; text-align: center; }
@@ -141,7 +142,7 @@ const PREDEFINED_TEMPLATES: Template[] = [
   .legal { font-size: 11px; color: #999; padding: 20px; text-align: justify; background: #fafafa; }
 </style>
 </head>
-<body>
+<body class="email-body">
   <div class="wrapper">
     <!-- Espaço reservado para imagem de destaque -->
     <div class="banner">
@@ -173,7 +174,7 @@ const PREDEFINED_TEMPLATES: Template[] = [
 <head>
 <meta charset="UTF-8">
 <style>
-  body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #111; color: #fff; margin:0; padding:0; }
+  .email-body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #111; color: #fff; margin:0; padding:0; }
   .dark-container { max-width: 600px; margin: 0 auto; background-color: #000; }
   .neon-line { height: 4px; background: linear-gradient(90deg, #660099, #A74AC7); }
   .hero { padding: 40px 20px; text-align: center; }
@@ -185,7 +186,7 @@ const PREDEFINED_TEMPLATES: Template[] = [
   .col:last-child { border: none; }
 </style>
 </head>
-<body>
+<body class="email-body">
   <div class="dark-container">
     <div class="neon-line"></div>
     <div class="hero">
