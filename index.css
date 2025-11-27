@@ -134,6 +134,61 @@ h2 {
   margin-bottom: 0.5rem;
 }
 
+/* Templates Gallery */
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.template-card {
+  background: #f8f9fa;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  padding: 0.75rem 0.25rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  transition: all 0.2s;
+}
+
+.template-card:hover {
+  border-color: var(--vivo-purple);
+  background: #f3e5f5;
+  transform: translateY(-2px);
+}
+
+.template-icon {
+  font-size: 1.5rem;
+}
+
+.template-name {
+  font-size: 0.7rem;
+  text-align: center;
+  color: #555;
+  font-weight: 500;
+}
+
+.divider-text {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #999;
+  margin: 0.5rem 0;
+  position: relative;
+}
+
+.divider-text::before, .divider-text::after {
+  content: "";
+  display: inline-block;
+  width: 40px;
+  height: 1px;
+  background: #eee;
+  vertical-align: middle;
+  margin: 0 10px;
+}
+
 /* File Upload */
 .file-upload {
   border: 2px dashed #ccc;

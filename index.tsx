@@ -20,6 +20,148 @@ interface Variable {
   value: string;
 }
 
+interface Template {
+  id: string;
+  name: string;
+  icon: string;
+  content: string;
+}
+
+// --- Predefined Templates (Vivo Identity) ---
+const PREDEFINED_TEMPLATES: Template[] = [
+  {
+    id: 'inst',
+    name: 'Comunicado Institucional',
+    icon: '📢',
+    content: `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body { margin: 0; padding: 0; font-family: 'Arial', sans-serif; background-color: #f6f6f6; }
+  .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
+  .header { background-color: #660099; padding: 30px 40px; text-align: left; }
+  .logo { color: white; font-size: 24px; font-weight: bold; text-decoration: none; }
+  .content { padding: 40px; color: #333333; line-height: 1.6; }
+  .h1 { color: #660099; font-size: 24px; margin-bottom: 20px; font-weight: bold; }
+  .footer { background-color: #333333; color: #999999; padding: 20px; text-align: center; font-size: 12px; }
+  .btn { display: inline-block; background-color: #660099; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 20px; }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">vivo</div>
+    </div>
+    <div class="content">
+      <div class="h1">Olá, ##NomeCliente##</div>
+      <p>Escrevemos hoje com transparência para falar sobre seus serviços.</p>
+      <p>[O texto gerado pela IA entrará aqui...]</p>
+      
+      <table width="100%" cellpadding="10" cellspacing="0" style="background-color: #f9f9f9; border-left: 4px solid #660099; margin: 20px 0;">
+        <tr>
+          <td>
+            <strong>Resumo da Atualização:</strong><br>
+            Ajuste aplicado: <strong>##Delta##</strong><br>
+            Motivo: Atualização contratual anual.
+          </td>
+        </tr>
+      </table>
+
+      <p>Estamos à disposição para tirar suas dúvidas.</p>
+      <a href="#" class="btn">Acessar Minha Vivo</a>
+    </div>
+    <div class="footer">
+      <p>Vivo - Telefônica Brasil S.A.<br>Este é um e-mail automático, por favor não responda.</p>
+    </div>
+  </div>
+</body>
+</html>`
+  },
+  {
+    id: 'promo',
+    name: 'Oferta Relâmpago',
+    icon: '⚡',
+    content: `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<style>
+  body { margin: 0; padding: 0; font-family: 'Arial', sans-serif; background-color: #eeeeee; }
+  .wrapper { max-width: 600px; margin: 20px auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+  .banner { background-color: #A74AC7; height: 200px; display: flex; align-items: center; justify-content: center; color: white; text-align: center; }
+  .main { padding: 30px; text-align: center; }
+  .title { color: #660099; font-size: 28px; margin: 0 0 10px; }
+  .price-tag { font-size: 40px; color: #333; font-weight: bold; margin: 20px 0; }
+  .cta-button { background-color: #660099; color: white; padding: 15px 40px; text-decoration: none; border-radius: 50px; font-size: 18px; display: inline-block; transition: 0.3s; }
+  .legal { font-size: 11px; color: #999; padding: 20px; text-align: justify; background: #fafafa; }
+</style>
+</head>
+<body>
+  <div class="wrapper">
+    <!-- Espaço reservado para imagem de destaque -->
+    <div class="banner">
+      <h1>Sua Internet pode mais</h1>
+    </div>
+    <div class="main">
+      <h2 class="title">Oferta Exclusiva para ##NomeCliente##</h2>
+      <p>Upgrade disponível com condições especiais apenas hoje.</p>
+      
+      <div class="price-tag">##Delta##</div>
+      
+      <p>Aproveite a ultravelocidade da Vivo Fibra.</p>
+      <br>
+      <a href="#" class="cta-button">QUERO APROVEITAR</a>
+    </div>
+    <div class="legal">
+      *Consulte regulamento no site. Oferta válida por tempo limitado.
+    </div>
+  </div>
+</body>
+</html>`
+  },
+  {
+    id: 'launch',
+    name: 'Lançamento Tech',
+    icon: '🚀',
+    content: `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<style>
+  body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #111; color: #fff; margin:0; padding:0; }
+  .dark-container { max-width: 600px; margin: 0 auto; background-color: #000; }
+  .neon-line { height: 4px; background: linear-gradient(90deg, #660099, #A74AC7); }
+  .hero { padding: 40px 20px; text-align: center; }
+  .product-title { font-size: 32px; letter-spacing: 2px; margin-bottom: 10px; color: #A74AC7; }
+  .desc { color: #ccc; line-height: 1.5; margin-bottom: 30px; }
+  .btn-outline { border: 2px solid #A74AC7; color: #fff; padding: 10px 30px; text-decoration: none; display: inline-block; }
+  .grid { display: flex; margin-top: 30px; border-top: 1px solid #333; }
+  .col { flex: 1; padding: 20px; text-align: center; border-right: 1px solid #333; }
+  .col:last-child { border: none; }
+</style>
+</head>
+<body>
+  <div class="dark-container">
+    <div class="neon-line"></div>
+    <div class="hero">
+      <div style="font-size: 14px; text-transform: uppercase; color: #666; margin-bottom: 20px;">Vivo Apresenta</div>
+      <h1 class="product-title">NOVO ##Delta##</h1>
+      <p class="desc">A tecnologia que transforma a sua casa chegou.<br>Disponível agora para ##NomeCliente##.</p>
+      <a href="#" class="btn-outline">CONHECER DETALHES</a>
+    </div>
+    <div class="grid">
+      <div class="col">Velocidade</div>
+      <div class="col">Estabilidade</div>
+      <div class="col">Inovação</div>
+    </div>
+  </div>
+</body>
+</html>`
+  }
+];
+
 const App: React.FC = () => {
   // --- State Management ---
   const [htmlTemplate, setHtmlTemplate] = useState<string>("");
@@ -51,6 +193,12 @@ const App: React.FC = () => {
   const editableDivRef = useRef<HTMLDivElement>(null);
 
   // --- Handlers ---
+
+  const handleSelectTemplate = (template: Template) => {
+    setHtmlTemplate(template.content);
+    setHtmlFileName(`Template: ${template.name}`);
+    setError(null);
+  };
 
   // 1. HTML Template Upload
   const handleHtmlUpload = (event: ChangeEvent<HTMLInputElement>) => {
@@ -186,6 +334,8 @@ const App: React.FC = () => {
       // Se tiver uma tag <main>, insere no começo dela, senão <body>, senão prepend.
       if (currentDraft.includes('<div class="main-content">')) {
          currentDraft = currentDraft.replace('<div class="main-content">', `<div class="main-content">${imgTag}`);
+      } else if (currentDraft.includes('<div class="wrapper">')) {
+         currentDraft = currentDraft.replace('<div class="wrapper">', `<div class="wrapper">${imgTag}`);
       } else if (currentDraft.includes('<body>')) {
          currentDraft = currentDraft.replace('<body>', `<body>${imgTag}`);
       } else {
@@ -322,13 +472,33 @@ ${contentToDownload}
       <main className="container">
         {/* Left Panel: Configuration */}
         <div className="card config-panel">
-          <h2>1. Estrutura & Dados</h2>
+          <h2>1. Estrutura & Templates</h2>
           
-          {/* 1. HTML Base */}
+          {/* 1.a Templates Gallery */}
           <div className="section-group">
-            <label className="section-title">Template HTML</label>
+            <label className="section-title">Galeria de Modelos Rápidos</label>
+            <div className="template-grid">
+              {PREDEFINED_TEMPLATES.map(t => (
+                <button 
+                  key={t.id} 
+                  className="template-card" 
+                  onClick={() => handleSelectTemplate(t)}
+                  title={t.name}
+                >
+                  <span className="template-icon">{t.icon}</span>
+                  <span className="template-name">{t.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="divider-text">OU</div>
+
+          {/* 1.b HTML Base Upload */}
+          <div className="section-group">
+            <label className="section-title">Upload de Arquivo Próprio</label>
             <div 
-              className={`file-upload small ${htmlTemplate ? 'active' : ''}`}
+              className={`file-upload small ${htmlTemplate && !htmlFileName.startsWith("Template:") ? 'active' : ''}`}
               onClick={() => htmlInputRef.current?.click()}
             >
               <input 
@@ -339,17 +509,16 @@ ${contentToDownload}
                 accept=".html,.htm"
               />
               <span role="img" aria-label="code">🌐</span>
-              <span>{htmlFileName || "Carregar Layout Base (HTML)"}</span>
-            </div>
-            <div style={{fontSize: '0.75rem', color: '#666', marginTop: '4px'}}>
-              Certifique-se que o arquivo esteja em UTF-8.
+              <span>{htmlFileName || "Carregar HTML do PC"}</span>
             </div>
           </div>
+
+          <hr style={{border: 'none', borderTop: '1px solid #eee', margin: '1rem 0'}} />
 
           {/* 2. Variables */}
           <div className="section-group">
             <div className="flex-header">
-              <label className="section-title">Dados Variáveis</label>
+              <h2>2. Dados Variáveis</h2>
               <button className="btn-text" onClick={() => txtInputRef.current?.click()}>
                 Importar .txt
               </button>
@@ -424,7 +593,7 @@ ${contentToDownload}
 
           <hr style={{border: 'none', borderTop: '1px solid #eee', margin: '1.5rem 0'}} />
 
-          <h2>2. Inteligência Artificial (Opcional)</h2>
+          <h2>3. Inteligência Artificial (Opcional)</h2>
           
           {/* 4. Prompt Customization (New) */}
           <div className="section-group">
@@ -488,9 +657,8 @@ ${contentToDownload}
           <div className="preview-container">
             {!generatedHtml ? (
               <div className="placeholder-text">
-                <div style={{fontSize: '3rem', marginBottom: '1rem'}}>📄</div>
-                <p>Carregue um arquivo HTML para começar.</p>
-                <small>O preview aparecerá aqui instantaneamente.</small>
+                <div style={{fontSize: '3rem', marginBottom: '1rem'}}>🎨</div>
+                <p>Selecione um template ou carregue um arquivo para começar.</p>
               </div>
             ) : viewMode === 'visual' ? (
               <div className="visual-editor-wrapper">
