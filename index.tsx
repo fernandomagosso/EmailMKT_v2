@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, ChangeEvent } from "react";
 import { createRoot } from "react-dom/client";
 import { GoogleGenAI } from "@google/genai";
@@ -145,6 +146,115 @@ const DEFAULT_TEMPLATES: Template[] = [
   }
 ];
 
+// --- Helper for Image Processing ---
+
+const processImage = (img: HTMLImageElement, action: string, param?: string): string => {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return img.src;
+
+  const w = img.naturalWidth;
+  const h = img.naturalHeight;
+
+  if (action === 'rotate') {
+    // 90 degree rotation
+    canvas.width = h;
+    canvas.height = w;
+    ctx.translate(h/2, w/2);
+    ctx.rotate(90 * Math.PI / 180);
+    ctx.drawImage(img, -w/2, -h/2);
+  } else if (action === 'crop') {
+    // Simple Center Crops
+    let cropW = w;
+    let cropH = h;
+    
+    if (param === 'square') {
+      const size = Math.min(w, h);
+      cropW = size;
+      cropH = size;
+    } else if (param === '16:9') {
+      if (w / h > 16/9) {
+        cropH = h;
+        cropW = h * (16/9);
+      } else {
+        cropW = w;
+        cropH = w * (9/16);
+      }
+    } else if (param === '4:5') {
+       if (w/h > 4/5) {
+         cropH = h;
+         cropW = h * (4/5);
+       } else {
+         cropW = w;
+         cropH = w * (5/4);
+       }
+    }
+
+    canvas.width = cropW;
+    canvas.height = cropH;
+    const sx = (w - cropW) / 2;
+    const sy = (h - cropH) / 2;
+    ctx.drawImage(img, sx, sy, cropW, cropH, 0, 0, cropW, cropH);
+
+  } else if (action === 'filter') {
+    canvas.width = w;
+    canvas.height = h;
+    if (param === 'grayscale') ctx.filter = 'grayscale(100%)';
+    if (param === 'sepia') ctx.filter = 'sepia(100%)';
+    ctx.drawImage(img, 0, 0);
+  }
+
+  return canvas.toDataURL('image/jpeg', 0.9);
+};
+
+// --- Helper for Toolbar ---
+const EditorToolbar = ({ onFormat, selectedImage, onImageAdjust, onImageProcess }: { 
+  onFormat: (cmd: string, val?: string) => void, 
+  selectedImage: HTMLImageElement | null,
+  onImageAdjust: (type: 'width' | 'align', val: string) => void,
+  onImageProcess: (type: string, param?: string) => void
+}) => {
+  return (
+    <div className="editor-toolbar">
+      <div className="toolbar-group">
+        <button onClick={() => onFormat('bold')} title="Negrito"><b>B</b></button>
+        <button onClick={() => onFormat('italic')} title="Itálico"><i>I</i></button>
+        <button onClick={() => onFormat('underline')} title="Sublinhado"><u>U</u></button>
+      </div>
+      <div className="toolbar-separator"></div>
+      <div className="toolbar-group">
+        <button onClick={() => onFormat('justifyLeft')} title="Esquerda">⬅️</button>
+        <button onClick={() => onFormat('justifyCenter')} title="Centralizar">⏺️</button>
+        <button onClick={() => onFormat('justifyRight')} title="Direita">➡️</button>
+      </div>
+      <div className="toolbar-separator"></div>
+      <div className="toolbar-group">
+        <button onClick={() => onFormat('formatBlock', 'H2')} title="Título">T</button>
+        <button onClick={() => onFormat('formatBlock', 'P')} title="Parágrafo">¶</button>
+      </div>
+      
+      {selectedImage && (
+        <>
+          <div className="toolbar-separator"></div>
+          <div className="toolbar-group image-controls-bar">
+            <span className="tool-label">TAMANHO:</span>
+            <button onClick={() => onImageAdjust('width', '100%')} title="Largura 100%">100%</button>
+            <button onClick={() => onImageAdjust('width', '75%')} title="Largura 75%">75%</button>
+            <button onClick={() => onImageAdjust('width', '50%')} title="Largura 50%">50%</button>
+            <span className="tool-divider">|</span>
+            <span className="tool-label">EDIÇÃO:</span>
+             <button onClick={() => onImageProcess('rotate')} title="Girar 90°">🔄</button>
+             <button onClick={() => onImageProcess('crop', 'square')} title="Recortar Quadrado">✂️ 1:1</button>
+             <button onClick={() => onImageProcess('crop', '16:9')} title="Recortar Paisagem">✂️ 16:9</button>
+             <button onClick={() => onImageProcess('filter', 'grayscale')} title="P&B">🎨 P&B</button>
+             <button onClick={() => onImageProcess('reset')} title="Restaurar Original">↩️</button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
 // --- Main Component ---
 
 const App: React.FC = () => {
@@ -157,7 +267,7 @@ const App: React.FC = () => {
     { id: '2', key: "##Delta##", value: "" }
   ]);
   
-  const [imageData, setImageData] = useState<{base64: string, name: string, width: number} | null>(null);
+  const [imageData, setImageData] = useState<{base64: string, name: string, width: number, original: string} | null>(null);
   
   const [customPrompt, setCustomPrompt] = useState<string>("");
   const [htmlPreview, setHtmlPreview] = useState<string>("");
@@ -165,7 +275,10 @@ const App: React.FC = () => {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [viewMode, setViewMode] = useState<'visual' | 'code'>('visual');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [renderKey, setRenderKey] = useState(0); // Force re-render trick for WYSIWYG
+  const [renderKey, setRenderKey] = useState(0); 
+  
+  // Editor State
+  const [selectedImage, setSelectedImage] = useState<HTMLImageElement | null>(null);
 
   // References
   const editableRef = useRef<HTMLDivElement>(null);
@@ -187,7 +300,6 @@ const App: React.FC = () => {
     // 1. Apply Variables
     variables.forEach(v => {
       if (v.key) {
-        // Escaping special regex characters for safety
         const safeKey = v.key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const regex = new RegExp(safeKey, 'g');
         draft = draft.replace(regex, v.value);
@@ -198,7 +310,6 @@ const App: React.FC = () => {
     if (imageData?.base64) {
       const imgTag = `<img src="${imageData.base64}" alt="Destaque" style="width: ${imageData.width}%; max-width: 100%; height: auto; display: block; margin: 20px auto; border-radius: 4px;" class="vivo-injected-img" />`;
       
-      // Attempt to place image intelligently if markers exist
       if (draft.includes('class="vivo-injected-img"')) {
         draft = draft.replace(/<img[^>]*class="vivo-injected-img"[^>]*>/g, imgTag);
       } else if (draft.includes('class="vivo-promo-hero"')) {
@@ -206,10 +317,8 @@ const App: React.FC = () => {
       } else if (draft.includes('<!-- Espaço reservado -->')) {
         draft = draft.replace('<!-- Espaço reservado -->', imgTag);
       } else if (draft.includes('<h1')) {
-         // Insert before H1 if no marker
         draft = draft.replace('<h1', `${imgTag}<h1`);
       } else {
-        // Fallback: inject after body open
         draft = draft.replace('<body', `<body`); 
         const bodyIdx = draft.indexOf('>', draft.indexOf('<body')) + 1;
         if (bodyIdx > 0) {
@@ -220,7 +329,7 @@ const App: React.FC = () => {
 
     setHtmlPreview(draft);
     setRenderKey(prev => prev + 1);
-  }, [templateContent, variables, imageData]);
+  }, [templateContent, variables, imageData?.base64]); // Re-run when image BASE64 changes
 
   // --- Handlers ---
 
@@ -288,7 +397,12 @@ const App: React.FC = () => {
     reader.onload = (ev) => {
       const res = ev.target?.result;
       if (typeof res === 'string') {
-        setImageData({ base64: res, name: file.name, width: 100 });
+        setImageData({ 
+          base64: res, 
+          name: file.name, 
+          width: 100,
+          original: res // store original for reset
+        });
         setErrorMsg(null);
       }
     };
@@ -297,8 +411,6 @@ const App: React.FC = () => {
 
   const handleAiOptimization = async () => {
     if (!htmlPreview) return;
-    
-    // Safety check for API Key
     const apiKey = process.env.API_KEY;
     if (!apiKey) {
       setErrorMsg("Chave de API não encontrada.");
@@ -309,35 +421,35 @@ const App: React.FC = () => {
     setErrorMsg(null);
 
     try {
-      // 1. Protect Image Data (Token Saving Strategy)
-      // This is crucial to prevent the AI from hallucinating broken Base64 strings or truncated HTML
       let contentToProcess = editableRef.current?.innerHTML || htmlPreview;
       let placeholder = "";
       
-      if (imageData?.base64 && contentToProcess.includes(imageData.base64)) {
-        placeholder = "##PROTECTED_IMG_BASE64##";
-        contentToProcess = contentToProcess.split(imageData.base64).join(placeholder);
+      const imgRegex = /src="(data:image\/[^;]+;base64,[^"]+)"/g;
+      const matches = contentToProcess.match(imgRegex);
+      const placeholders: Record<string, string> = {};
+
+      if (matches) {
+        matches.forEach((match, idx) => {
+           const dataUrl = match.match(/"([^"]+)"/)?.[1];
+           if (dataUrl) {
+             const key = `##IMG_DATA_${idx}##`;
+             placeholders[key] = dataUrl;
+             contentToProcess = contentToProcess.replace(dataUrl, key);
+           }
+        });
       }
 
       const ai = new GoogleGenAI({ apiKey });
-      
       const prompt = `
         VOCÊ É: Especialista em Email Marketing e UX Writing da Vivo.
         OBJETIVO: Melhorar o conteúdo do HTML abaixo.
-        
-        HTML INPUT:
-        ${contentToProcess}
-
-        INSTRUÇÕES ESPECÍFICAS:
-        ${customPrompt || "Melhore a clareza, corrija a gramática e torne o tom amigável e transparente."}
-
-        REGRAS TÉCNICAS:
-        1. Mantenha a estrutura HTML intacta (tags, classes, estilos).
-        2. NÃO remova o placeholder '${placeholder}' se ele existir no src da imagem.
-        3. Use acentuação normal (UTF-8), não use entidades HTML como &atilde;.
-        4. Retorne APENAS o código HTML limpo.
-
-        Saída:
+        HTML INPUT: ${contentToProcess}
+        INSTRUÇÕES: ${customPrompt || "Melhore a clareza, corrija a gramática e torne o tom amigável e transparente."}
+        REGRAS:
+        1. Mantenha estrutura HTML.
+        2. NÃO remova placeholders ##IMG_DATA_X##.
+        3. Use UTF-8 (acentos diretos).
+        4. Retorne apenas o código HTML.
       `;
 
       const response = await ai.models.generateContent({
@@ -346,20 +458,17 @@ const App: React.FC = () => {
       });
       let responseText = response.text || "";
       
-      // Clean markdown code blocks if present
       responseText = responseText.replace(/```html/g, '').replace(/```/g, '').trim();
 
-      // 2. Restore Image
-      if (placeholder && imageData?.base64) {
-        responseText = responseText.split(placeholder).join(imageData.base64);
-      }
+      Object.keys(placeholders).forEach(key => {
+        responseText = responseText.split(key).join(placeholders[key]);
+      });
 
-      // Update Preview
       if (editableRef.current) {
         editableRef.current.innerHTML = responseText;
       }
-      setHtmlPreview(responseText); // Sync state
-      setRenderKey(prev => prev + 1); // Force re-render of key
+      setHtmlPreview(responseText); 
+      setRenderKey(prev => prev + 1);
 
     } catch (e: any) {
       console.error(e);
@@ -372,12 +481,9 @@ const App: React.FC = () => {
   const handleDownload = () => {
     let content = editableRef.current?.innerHTML || htmlPreview;
     if (!content) return;
-
-    // Ensure Meta Charset for UTF-8
     if (!content.includes('<meta charset="utf-8"')) {
        content = `<!DOCTYPE html>\n<html lang="pt-BR">\n<head>\n<meta charset="utf-8">\n<title>Email Vivo</title>\n</head>\n<body>\n${content}\n</body>\n</html>`;
     }
-
     const blob = new Blob([content], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -388,16 +494,73 @@ const App: React.FC = () => {
     document.body.removeChild(a);
   };
 
+  // --- Editor Toolbar Handlers ---
+  const executeCommand = (cmd: string, val?: string) => {
+    document.execCommand(cmd, false, val);
+    if (editableRef.current) editableRef.current.focus();
+  };
+
+  const handleEditorClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'IMG') {
+      setSelectedImage(target as HTMLImageElement);
+    } else {
+      setSelectedImage(null);
+    }
+  };
+
+  const handleImageAdjust = (type: 'width' | 'align', val: string) => {
+    if (!selectedImage) return;
+    if (type === 'width') {
+      selectedImage.style.width = val;
+    } else if (type === 'align') {
+      selectedImage.style.display = 'block';
+      if (val === 'center') {
+        selectedImage.style.marginLeft = 'auto';
+        selectedImage.style.marginRight = 'auto';
+        selectedImage.style.float = 'none';
+      } else if (val === 'left') {
+        selectedImage.style.marginLeft = '0';
+        selectedImage.style.marginRight = 'auto';
+        selectedImage.style.float = 'left';
+      } else if (val === 'right') {
+        selectedImage.style.marginLeft = 'auto';
+        selectedImage.style.marginRight = '0';
+        selectedImage.style.float = 'right';
+      }
+    }
+    if (editableRef.current) setHtmlPreview(editableRef.current.innerHTML);
+  };
+
+  const handleImageProcess = (type: string, param?: string) => {
+    if (!selectedImage) return;
+
+    if (type === 'reset' && imageData?.original) {
+      selectedImage.src = imageData.original;
+      if (editableRef.current) setHtmlPreview(editableRef.current.innerHTML);
+      // Also update main state to reflect reset if it matches the main image
+      setImageData(prev => prev ? { ...prev, base64: prev.original } : null);
+      return;
+    }
+
+    // Process using canvas
+    const newBase64 = processImage(selectedImage, type, param);
+    selectedImage.src = newBase64;
+    
+    // Sync main state
+    setImageData(prev => prev ? { ...prev, base64: newBase64 } : null);
+    
+    if (editableRef.current) setHtmlPreview(editableRef.current.innerHTML);
+  };
+
   return (
     <div className="app-container">
-      {/* Sidebar Configuration */}
       <aside className="sidebar">
         <header className="brand-header">
           <h1>vivo <span className="subtitle">Marketing Builder</span></h1>
         </header>
 
         <div className="scroll-content">
-          {/* Section 1: Templates */}
           <section className="control-group">
             <label className="group-label">1. Escolha o Layout</label>
             <div className="template-list">
@@ -422,7 +585,6 @@ const App: React.FC = () => {
             <input type="file" hidden ref={fileInputRef} accept=".html" onChange={handleHtmlUpload} />
           </section>
 
-          {/* Section 2: Variables */}
           <section className="control-group">
             <div className="flex-between">
               <label className="group-label">2. Dados Variáveis</label>
@@ -461,9 +623,8 @@ const App: React.FC = () => {
             </div>
           </section>
 
-          {/* Section 3: Image */}
           <section className="control-group">
-            <label className="group-label">3. Imagem Destaque</label>
+            <label className="group-label">3. Imagem Destaque (Inicial)</label>
             <div className="upload-box" onClick={() => imgInputRef.current?.click()}>
               {imageData ? (
                 <span>📷 {imageData.name}</span>
@@ -472,21 +633,8 @@ const App: React.FC = () => {
               )}
             </div>
             <input type="file" hidden ref={imgInputRef} accept="image/*" onChange={handleImgUpload} />
-            {imageData && (
-              <div className="range-control">
-                <small>Largura: {imageData.width}%</small>
-                <input 
-                  type="range" 
-                  min="20" 
-                  max="100" 
-                  value={imageData.width} 
-                  onChange={e => setImageData({...imageData, width: Number(e.target.value)})} 
-                />
-              </div>
-            )}
           </section>
 
-          {/* Section 4: AI */}
           <section className="control-group ai-section">
             <label className="group-label">4. Otimização IA</label>
             <textarea 
@@ -509,17 +657,27 @@ const App: React.FC = () => {
         </div>
       </aside>
 
-      {/* Main Preview Area */}
       <main className="preview-area">
         <header className="preview-toolbar">
           <div className="tabs">
-            <button className={`tab ${viewMode === 'visual' ? 'active' : ''}`} onClick={() => setViewMode('visual')}>Visual Editor</button>
-            <button className={`tab ${viewMode === 'code' ? 'active' : ''}`} onClick={() => setViewMode('code')}>HTML Code</button>
+            <button className={`tab ${viewMode === 'visual' ? 'active' : ''}`} onClick={() => setViewMode('visual')}>Editor Visual</button>
+            <button className={`tab ${viewMode === 'code' ? 'active' : ''}`} onClick={() => setViewMode('code')}>Código HTML</button>
           </div>
           <button className="primary-btn download-btn" onClick={handleDownload} disabled={!htmlPreview}>
             💾 Baixar HTML
           </button>
         </header>
+
+        {viewMode === 'visual' && htmlPreview && (
+          <div className="formatting-bar-container">
+            <EditorToolbar 
+              onFormat={executeCommand} 
+              selectedImage={selectedImage} 
+              onImageAdjust={handleImageAdjust}
+              onImageProcess={handleImageProcess}
+            />
+          </div>
+        )}
 
         <div className="canvas-wrapper">
           {viewMode === 'visual' ? (
@@ -527,16 +685,14 @@ const App: React.FC = () => {
               {!htmlPreview && <div className="empty-state">Selecione um template para começar</div>}
               {htmlPreview && (
                 <div 
-                  key={renderKey} // Force re-render when state changes significantly
+                  key={renderKey}
                   ref={editableRef}
                   className="email-content-editable"
                   contentEditable={true}
                   suppressContentEditableWarning={true}
                   dangerouslySetInnerHTML={{ __html: htmlPreview }}
-                  onInput={(e) => {
-                    // We don't strictly set state here to avoid cursor jumps,
-                    // but we ensure the ref used for download is up to date.
-                  }}
+                  onClick={handleEditorClick}
+                  onInput={() => {}}
                 />
               )}
             </div>
@@ -544,10 +700,7 @@ const App: React.FC = () => {
              <textarea 
                className="code-editor" 
                value={editableRef.current?.innerHTML || htmlPreview} 
-               onChange={(e) => {
-                 setHtmlPreview(e.target.value);
-                 // We don't update ref here immediately to avoid circular logic until visual mode is back
-               }}
+               onChange={(e) => setHtmlPreview(e.target.value)}
              />
           )}
         </div>
