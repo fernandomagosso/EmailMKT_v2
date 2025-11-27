@@ -38,36 +38,36 @@ const PREDEFINED_TEMPLATES: Template[] = [
 <meta charset="UTF-8">
 <style>
   /* Prefixing classes to avoid conflict with main app styles */
-  .email-body { margin: 0; padding: 0; font-family: 'Arial', sans-serif; background-color: #f6f6f6; color: #333; }
-  .email-container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-top: 5px solid #660099; }
-  .email-header { padding: 30px 40px; border-bottom: 1px solid #eee; }
-  .email-logo { color: #660099; font-size: 24px; font-weight: bold; }
-  .email-content { padding: 40px; line-height: 1.6; }
-  .alert-box { background-color: #f3e5f5; border-left: 4px solid #A74AC7; padding: 15px; margin: 20px 0; border-radius: 4px; }
-  .old-price { text-decoration: line-through; color: #999; }
-  .new-price { font-size: 1.2em; font-weight: bold; color: #660099; }
-  .email-footer { background-color: #333; color: #fff; padding: 20px; text-align: center; font-size: 12px; }
+  .vivo-email-body { margin: 0; padding: 0; font-family: 'Arial', sans-serif; background-color: #f6f6f6; color: #333; }
+  .vivo-email-container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-top: 5px solid #660099; }
+  .vivo-email-header { padding: 30px 40px; border-bottom: 1px solid #eee; }
+  .vivo-email-logo { color: #660099; font-size: 24px; font-weight: bold; }
+  .vivo-email-content { padding: 40px; line-height: 1.6; }
+  .vivo-alert-box { background-color: #f3e5f5; border-left: 4px solid #A74AC7; padding: 15px; margin: 20px 0; border-radius: 4px; }
+  .vivo-old-price { text-decoration: line-through; color: #999; }
+  .vivo-new-price { font-size: 1.2em; font-weight: bold; color: #660099; }
+  .vivo-email-footer { background-color: #333; color: #fff; padding: 20px; text-align: center; font-size: 12px; }
 </style>
 </head>
-<body class="email-body">
-  <div class="email-container">
-    <div class="email-header">
-      <div class="email-logo">vivo</div>
+<body class="vivo-email-body">
+  <div class="vivo-email-container">
+    <div class="vivo-email-header">
+      <div class="vivo-email-logo">vivo</div>
     </div>
-    <div class="email-content">
+    <div class="vivo-email-content">
       <h2 style="color: #660099; margin-top: 0;">Atualização importante sobre sua conta</h2>
       <p>Olá, <strong>##NomeCliente##</strong>.</p>
       <p>Acreditamos na transparência total em nossa relação. Por isso, estamos entrando em contato para informar sobre o reajuste anual do seu plano.</p>
       
-      <div class="alert-box">
+      <div class="vivo-alert-box">
         <p style="margin: 0;"><strong>Detalhes da Atualização:</strong></p>
-        <p style="margin: 5px 0 0 0;">O valor do seu plano terá um ajuste de <span class="new-price">##Delta##</span> referente à inflação acumulada e melhorias na rede.</p>
+        <p style="margin: 5px 0 0 0;">O valor do seu plano terá um ajuste de <span class="vivo-new-price">##Delta##</span> referente à inflação acumulada e melhorias na rede.</p>
       </div>
 
       <p>Este ajuste nos permite continuar investindo na expansão da fibra ótica e garantir a estabilidade que sua casa precisa.</p>
       <p>Qualquer dúvida, estamos à disposição em nossos canais oficiais.</p>
     </div>
-    <div class="email-footer">
+    <div class="vivo-email-footer">
       Vivo - Telefônica Brasil S.A.<br>
       Acesse o App Vivo para mais detalhes.
     </div>
@@ -84,23 +84,23 @@ const PREDEFINED_TEMPLATES: Template[] = [
 <head>
 <meta charset="UTF-8">
 <style>
-  .email-body { margin: 0; padding: 0; font-family: 'Arial', sans-serif; background-color: #f6f6f6; }
-  .email-container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
-  .email-header { background-color: #660099; padding: 30px 40px; text-align: left; }
-  .email-logo { color: white; font-size: 24px; font-weight: bold; text-decoration: none; }
-  .email-content { padding: 40px; color: #333333; line-height: 1.6; }
-  .h1 { color: #660099; font-size: 24px; margin-bottom: 20px; font-weight: bold; }
-  .email-footer { background-color: #333333; color: #999999; padding: 20px; text-align: center; font-size: 12px; }
-  .email-btn { display: inline-block; background-color: #660099; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 20px; }
+  .vivo-inst-body { margin: 0; padding: 0; font-family: 'Arial', sans-serif; background-color: #f6f6f6; }
+  .vivo-inst-container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
+  .vivo-inst-header { background-color: #660099; padding: 30px 40px; text-align: left; }
+  .vivo-inst-logo { color: white; font-size: 24px; font-weight: bold; text-decoration: none; }
+  .vivo-inst-content { padding: 40px; color: #333333; line-height: 1.6; }
+  .vivo-inst-h1 { color: #660099; font-size: 24px; margin-bottom: 20px; font-weight: bold; }
+  .vivo-inst-footer { background-color: #333333; color: #999999; padding: 20px; text-align: center; font-size: 12px; }
+  .vivo-inst-btn { display: inline-block; background-color: #660099; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 20px; }
 </style>
 </head>
-<body class="email-body">
-  <div class="email-container">
-    <div class="email-header">
-      <div class="email-logo">vivo</div>
+<body class="vivo-inst-body">
+  <div class="vivo-inst-container">
+    <div class="vivo-inst-header">
+      <div class="vivo-inst-logo">vivo</div>
     </div>
-    <div class="email-content">
-      <div class="h1">Olá, ##NomeCliente##</div>
+    <div class="vivo-inst-content">
+      <div class="vivo-inst-h1">Olá, ##NomeCliente##</div>
       <p>Escrevemos hoje com transparência para falar sobre seus serviços.</p>
       <p>Este é um espaço para comunicado oficial da marca.</p>
       
@@ -114,9 +114,9 @@ const PREDEFINED_TEMPLATES: Template[] = [
       </table>
 
       <p>Estamos à disposição para tirar suas dúvidas.</p>
-      <a href="#" class="email-btn">Acessar Minha Vivo</a>
+      <a href="#" class="vivo-inst-btn">Acessar Minha Vivo</a>
     </div>
-    <div class="email-footer">
+    <div class="vivo-inst-footer">
       <p>Vivo - Telefônica Brasil S.A.<br>Este é um e-mail automático, por favor não responda.</p>
     </div>
   </div>
@@ -132,33 +132,33 @@ const PREDEFINED_TEMPLATES: Template[] = [
 <head>
 <meta charset="UTF-8">
 <style>
-  .email-body { margin: 0; padding: 0; font-family: 'Arial', sans-serif; background-color: #eeeeee; }
-  .wrapper { max-width: 600px; margin: 20px auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-  .banner { background-color: #A74AC7; height: 200px; display: flex; align-items: center; justify-content: center; color: white; text-align: center; }
-  .main { padding: 30px; text-align: center; }
-  .title { color: #660099; font-size: 28px; margin: 0 0 10px; }
-  .price-tag { font-size: 40px; color: #333; font-weight: bold; margin: 20px 0; }
-  .cta-button { background-color: #660099; color: white; padding: 15px 40px; text-decoration: none; border-radius: 50px; font-size: 18px; display: inline-block; transition: 0.3s; }
-  .legal { font-size: 11px; color: #999; padding: 20px; text-align: justify; background: #fafafa; }
+  .vivo-promo-body { margin: 0; padding: 0; font-family: 'Arial', sans-serif; background-color: #eeeeee; }
+  .vivo-promo-wrapper { max-width: 600px; margin: 20px auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+  .vivo-promo-banner { background-color: #A74AC7; height: 200px; display: flex; align-items: center; justify-content: center; color: white; text-align: center; }
+  .vivo-promo-main { padding: 30px; text-align: center; }
+  .vivo-promo-title { color: #660099; font-size: 28px; margin: 0 0 10px; }
+  .vivo-promo-price { font-size: 40px; color: #333; font-weight: bold; margin: 20px 0; }
+  .vivo-promo-cta { background-color: #660099; color: white; padding: 15px 40px; text-decoration: none; border-radius: 50px; font-size: 18px; display: inline-block; transition: 0.3s; }
+  .vivo-promo-legal { font-size: 11px; color: #999; padding: 20px; text-align: justify; background: #fafafa; }
 </style>
 </head>
-<body class="email-body">
-  <div class="wrapper">
+<body class="vivo-promo-body">
+  <div class="vivo-promo-wrapper">
     <!-- Espaço reservado para imagem de destaque -->
-    <div class="banner">
+    <div class="vivo-promo-banner">
       <h1>Sua Internet pode mais</h1>
     </div>
-    <div class="main">
-      <h2 class="title">Oferta Exclusiva para ##NomeCliente##</h2>
+    <div class="vivo-promo-main">
+      <h2 class="vivo-promo-title">Oferta Exclusiva para ##NomeCliente##</h2>
       <p>Upgrade disponível com condições especiais apenas hoje.</p>
       
-      <div class="price-tag">##Delta##</div>
+      <div class="vivo-promo-price">##Delta##</div>
       
       <p>Aproveite a ultravelocidade da Vivo Fibra.</p>
       <br>
-      <a href="#" class="cta-button">QUERO APROVEITAR</a>
+      <a href="#" class="vivo-promo-cta">QUERO APROVEITAR</a>
     </div>
-    <div class="legal">
+    <div class="vivo-promo-legal">
       *Consulte regulamento no site. Oferta válida por tempo limitado.
     </div>
   </div>
@@ -174,31 +174,31 @@ const PREDEFINED_TEMPLATES: Template[] = [
 <head>
 <meta charset="UTF-8">
 <style>
-  .email-body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #111; color: #fff; margin:0; padding:0; }
-  .dark-container { max-width: 600px; margin: 0 auto; background-color: #000; }
-  .neon-line { height: 4px; background: linear-gradient(90deg, #660099, #A74AC7); }
-  .hero { padding: 40px 20px; text-align: center; }
-  .product-title { font-size: 32px; letter-spacing: 2px; margin-bottom: 10px; color: #A74AC7; }
-  .desc { color: #ccc; line-height: 1.5; margin-bottom: 30px; }
-  .btn-outline { border: 2px solid #A74AC7; color: #fff; padding: 10px 30px; text-decoration: none; display: inline-block; }
-  .grid { display: flex; margin-top: 30px; border-top: 1px solid #333; }
-  .col { flex: 1; padding: 20px; text-align: center; border-right: 1px solid #333; }
-  .col:last-child { border: none; }
+  .vivo-launch-body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #111; color: #fff; margin:0; padding:0; }
+  .vivo-launch-container { max-width: 600px; margin: 0 auto; background-color: #000; }
+  .vivo-launch-neon { height: 4px; background: linear-gradient(90deg, #660099, #A74AC7); }
+  .vivo-launch-hero { padding: 40px 20px; text-align: center; }
+  .vivo-launch-title { font-size: 32px; letter-spacing: 2px; margin-bottom: 10px; color: #A74AC7; }
+  .vivo-launch-desc { color: #ccc; line-height: 1.5; margin-bottom: 30px; }
+  .vivo-launch-btn { border: 2px solid #A74AC7; color: #fff; padding: 10px 30px; text-decoration: none; display: inline-block; }
+  .vivo-launch-grid { display: flex; margin-top: 30px; border-top: 1px solid #333; }
+  .vivo-launch-col { flex: 1; padding: 20px; text-align: center; border-right: 1px solid #333; }
+  .vivo-launch-col:last-child { border: none; }
 </style>
 </head>
-<body class="email-body">
-  <div class="dark-container">
-    <div class="neon-line"></div>
-    <div class="hero">
+<body class="vivo-launch-body">
+  <div class="vivo-launch-container">
+    <div class="vivo-launch-neon"></div>
+    <div class="vivo-launch-hero">
       <div style="font-size: 14px; text-transform: uppercase; color: #666; margin-bottom: 20px;">Vivo Apresenta</div>
-      <h1 class="product-title">NOVO ##Delta##</h1>
-      <p class="desc">A tecnologia que transforma a sua casa chegou.<br>Disponível agora para ##NomeCliente##.</p>
-      <a href="#" class="btn-outline">CONHECER DETALHES</a>
+      <h1 class="vivo-launch-title">NOVO ##Delta##</h1>
+      <p class="vivo-launch-desc">A tecnologia que transforma a sua casa chegou.<br>Disponível agora para ##NomeCliente##.</p>
+      <a href="#" class="vivo-launch-btn">CONHECER DETALHES</a>
     </div>
-    <div class="grid">
-      <div class="col">Velocidade</div>
-      <div class="col">Estabilidade</div>
-      <div class="col">Inovação</div>
+    <div class="vivo-launch-grid">
+      <div class="vivo-launch-col">Velocidade</div>
+      <div class="vivo-launch-col">Estabilidade</div>
+      <div class="vivo-launch-col">Inovação</div>
     </div>
   </div>
 </body>
@@ -382,8 +382,9 @@ const App: React.FC = () => {
         // Inserção inteligente
         if (currentDraft.includes('<div class="main-content">')) {
            currentDraft = currentDraft.replace('<div class="main-content">', `<div class="main-content">${imgTag}`);
+        } else if (currentDraft.includes('class="vivo-promo-banner"')) {
+            currentDraft = currentDraft.replace(/<div class="vivo-promo-banner".*?<\/div>/s, `<div class="vivo-promo-banner" style="height:auto; padding:0; background:none;">${imgTag}</div>`);
         } else if (currentDraft.includes('<div class="banner">')) {
-           // Se tiver banner, talvez substituir o conteúdo do banner
            currentDraft = currentDraft.replace(/<div class="banner">.*?<\/div>/s, `<div class="banner" style="height:auto; padding:0; background:none;">${imgTag}</div>`);
         } else if (currentDraft.includes('<body>')) {
            currentDraft = currentDraft.replace('<body>', `<body>${imgTag}`);
