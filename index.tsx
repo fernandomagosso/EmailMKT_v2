@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, ChangeEvent, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { GoogleGenAI } from "@google/genai";
@@ -30,14 +29,59 @@ interface Template {
 // --- Predefined Templates (Vivo Identity) ---
 const PREDEFINED_TEMPLATES: Template[] = [
   {
+    id: 'adjust',
+    name: 'Aviso de Ajuste',
+    icon: '⚖️',
+    content: `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<style>
+  body { margin: 0; padding: 0; font-family: 'Arial', sans-serif; background-color: #f6f6f6; color: #333; }
+  .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-top: 5px solid #660099; }
+  .header { padding: 30px 40px; border-bottom: 1px solid #eee; }
+  .logo { color: #660099; font-size: 24px; font-weight: bold; }
+  .content { padding: 40px; line-height: 1.6; }
+  .alert-box { background-color: #f3e5f5; border-left: 4px solid #A74AC7; padding: 15px; margin: 20px 0; border-radius: 4px; }
+  .old-price { text-decoration: line-through; color: #999; }
+  .new-price { font-size: 1.2em; font-weight: bold; color: #660099; }
+  .footer { background-color: #333; color: #fff; padding: 20px; text-align: center; font-size: 12px; }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">vivo</div>
+    </div>
+    <div class="content">
+      <h2 style="color: #660099; margin-top: 0;">Atualização importante sobre sua conta</h2>
+      <p>Olá, <strong>##NomeCliente##</strong>.</p>
+      <p>Acreditamos na transparência total em nossa relação. Por isso, estamos entrando em contato para informar sobre o reajuste anual do seu plano.</p>
+      
+      <div class="alert-box">
+        <p style="margin: 0;"><strong>Detalhes da Atualização:</strong></p>
+        <p style="margin: 5px 0 0 0;">O valor do seu plano terá um ajuste de <span class="new-price">##Delta##</span> referente à inflação acumulada e melhorias na rede.</p>
+      </div>
+
+      <p>Este ajuste nos permite continuar investindo na expansão da fibra ótica e garantir a estabilidade que sua casa precisa.</p>
+      <p>Qualquer dúvida, estamos à disposição em nossos canais oficiais.</p>
+    </div>
+    <div class="footer">
+      Vivo - Telefônica Brasil S.A.<br>
+      Acesse o App Vivo para mais detalhes.
+    </div>
+  </div>
+</body>
+</html>`
+  },
+  {
     id: 'inst',
-    name: 'Comunicado Institucional',
+    name: 'Institucional',
     icon: '📢',
     content: `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
   body { margin: 0; padding: 0; font-family: 'Arial', sans-serif; background-color: #f6f6f6; }
   .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
@@ -57,14 +101,13 @@ const PREDEFINED_TEMPLATES: Template[] = [
     <div class="content">
       <div class="h1">Olá, ##NomeCliente##</div>
       <p>Escrevemos hoje com transparência para falar sobre seus serviços.</p>
-      <p>[O texto gerado pela IA entrará aqui...]</p>
+      <p>Este é um espaço para comunicado oficial da marca.</p>
       
       <table width="100%" cellpadding="10" cellspacing="0" style="background-color: #f9f9f9; border-left: 4px solid #660099; margin: 20px 0;">
         <tr>
           <td>
-            <strong>Resumo da Atualização:</strong><br>
-            Ajuste aplicado: <strong>##Delta##</strong><br>
-            Motivo: Atualização contratual anual.
+            <strong>Resumo:</strong><br>
+            Ajuste: <strong>##Delta##</strong><br>
           </td>
         </tr>
       </table>
@@ -182,6 +225,9 @@ const App: React.FC = () => {
   const [generatedHtml, setGeneratedHtml] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Used to force re-render of contentEditable when AI updates
+  const [refreshKey, setRefreshKey] = useState<number>(0);
 
   // New State: View Mode (Visual Editor vs Code)
   const [viewMode, setViewMode] = useState<'visual' | 'code'>('visual');
@@ -310,19 +356,16 @@ const App: React.FC = () => {
   };
 
   // --- LIVE PREVIEW LOGIC ---
-  // Atualiza o HTML gerado automaticamente quando o template, variáveis ou imagem mudam.
-  // Isso permite visualização imediata sem chamar a IA.
   useEffect(() => {
     if (!htmlTemplate) return;
 
     let currentDraft = htmlTemplate;
 
-    // 1. Substituição de Variáveis (Simples String Replace)
+    // 1. Substituição de Variáveis
     variables.forEach(v => {
       if (v.key) {
-        // Escapa caracteres especiais para regex, caso necessário
         const regex = new RegExp(v.key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
-        currentDraft = currentDraft.replace(regex, v.value); // Se vazio, remove ou mantém vazio
+        currentDraft = currentDraft.replace(regex, v.value);
       }
     });
 
@@ -330,30 +373,37 @@ const App: React.FC = () => {
     if (imageBase64) {
       const imgTag = `<img src="${imageBase64}" style="width: ${imageWidth}%; max-width: 100%; height: auto; display: block; margin: 20px auto;" alt="Destaque" class="injected-img" />`;
       
-      // Tenta inserir logo após a abertura do body ou container principal
-      // Se tiver uma tag <main>, insere no começo dela, senão <body>, senão prepend.
-      if (currentDraft.includes('<div class="main-content">')) {
-         currentDraft = currentDraft.replace('<div class="main-content">', `<div class="main-content">${imgTag}`);
-      } else if (currentDraft.includes('<div class="wrapper">')) {
-         currentDraft = currentDraft.replace('<div class="wrapper">', `<div class="wrapper">${imgTag}`);
-      } else if (currentDraft.includes('<body>')) {
-         currentDraft = currentDraft.replace('<body>', `<body>${imgTag}`);
+      // Procura se já existe uma imagem injetada anteriormente para substituir
+      if (currentDraft.includes('class="injected-img"')) {
+         // Regex simples para substituir tag img existente com essa classe
+         currentDraft = currentDraft.replace(/<img[^>]*class="injected-img"[^>]*>/g, imgTag);
       } else {
-         currentDraft = imgTag + currentDraft;
+        // Inserção inteligente
+        if (currentDraft.includes('<div class="main-content">')) {
+           currentDraft = currentDraft.replace('<div class="main-content">', `<div class="main-content">${imgTag}`);
+        } else if (currentDraft.includes('<div class="banner">')) {
+           // Se tiver banner, talvez substituir o conteúdo do banner
+           currentDraft = currentDraft.replace(/<div class="banner">.*?<\/div>/s, `<div class="banner" style="height:auto; padding:0; background:none;">${imgTag}</div>`);
+        } else if (currentDraft.includes('<body>')) {
+           currentDraft = currentDraft.replace('<body>', `<body>${imgTag}`);
+        } else {
+           currentDraft = imgTag + currentDraft;
+        }
       }
     }
 
     setGeneratedHtml(currentDraft);
+    // Increment key to force re-render of div
+    setRefreshKey(prev => prev + 1);
   }, [htmlTemplate, variables, imageBase64, imageWidth]);
 
-  // 4. AI Refinement Logic (Opt-in)
+  // 4. AI Refinement Logic
   const handleAiRefinement = async () => {
     if (!generatedHtml) {
       setError("Obrigatório: Carregue um template primeiro.");
       return;
     }
 
-    // Tenta obter a chave do process (Node) ou window.process (Navegador com polyfill)
     const apiKey = typeof process !== 'undefined' && process.env && process.env.API_KEY
       ? process.env.API_KEY 
       : window.process?.env?.API_KEY;
@@ -369,7 +419,22 @@ const App: React.FC = () => {
     try {
       const ai = new GoogleGenAI({ apiKey });
       
-      const currentContent = editableDivRef.current?.innerHTML || generatedHtml;
+      // CAPTURE CONTENT FROM EDITOR
+      let contentToProcess = editableDivRef.current?.innerHTML || generatedHtml;
+
+      // --- PROTECTION LOGIC: HIDE IMAGE BASE64 ---
+      // Sending huge base64 strings to LLM is bad. We replace it with a token.
+      const IMG_PLACEHOLDER = "<!-- ##PROTECTED_IMAGE## -->";
+      let hasImage = false;
+      
+      if (imageBase64) {
+        // We try to find the image tag containing the base64 and replace the src, or the whole tag if easiest.
+        // Simplest strategy: If the content contains the exact base64 string, replace it.
+        if (contentToProcess.includes(imageBase64)) {
+            contentToProcess = contentToProcess.split(imageBase64).join("##IMG_DATA##");
+            hasImage = true;
+        }
+      }
 
       const prompt = `
         CONTEXTO: Você é um Especialista em Marketing Direto e Desenvolvedor Front-end da Vivo.
@@ -377,7 +442,7 @@ const App: React.FC = () => {
 
         INPUT (HTML ATUAL):
         \`\`\`html
-        ${currentContent}
+        ${contentToProcess}
         \`\`\`
         
         INSTRUÇÕES DE USUÁRIO (O que melhorar):
@@ -385,14 +450,9 @@ const App: React.FC = () => {
 
         DIRETRIZES TÉCNICAS E DE FORMATAÇÃO:
         - IMPORTANTE: Retorne os caracteres acentuados (ã, é, ç, ê) diretamente em formato UTF-8, NÃO use entidades HTML (como &atilde;, &ccedil;). Isso é vital para o editor visual funcionar corretamente.
-        - Mantenha a estrutura HTML intacta, apenas altere os textos dentro das tags.
-        - Se houver placeholders, preencha com conteúdo realista da Vivo.
+        - Mantenha a estrutura HTML intacta.
+        - Se encontrar ##IMG_DATA## no src da imagem, MANTENHA EXATAMENTE ASSIM. Não altere o placeholder da imagem.
         - Certifique-se de que o português esteja no padrão Brasil (pt-BR).
-
-        DIRETRIZES DE MARKETING ÉTICO:
-        - Foco em transparência (explicar mudanças de preço claramente).
-        - Benefícios auditáveis.
-        - Sem promessas falsas.
 
         OUTPUT ESPERADO:
         - Retorne APENAS o código HTML corrigido/melhorado.
@@ -406,9 +466,13 @@ const App: React.FC = () => {
       let cleanHtml = response.text || "";
       cleanHtml = cleanHtml.replace(/^```html\s*/i, '').replace(/```$/, '');
 
+      // --- RESTORE IMAGE ---
+      if (hasImage && imageBase64) {
+          cleanHtml = cleanHtml.split("##IMG_DATA##").join(imageBase64);
+      }
+
       setGeneratedHtml(cleanHtml);
-      // Força atualização visual se necessário
-      if(editableDivRef.current) editableDivRef.current.innerHTML = cleanHtml;
+      setRefreshKey(prev => prev + 1); // Force div refresh
 
     } catch (err: unknown) {
       console.error(err);
@@ -426,9 +490,8 @@ const App: React.FC = () => {
     let contentToDownload = editableDivRef.current?.innerHTML || generatedHtml;
     if (!contentToDownload) return;
     
-    // Assegura que o HTML tenha a meta charset para pt-BR
+    // Ensure Meta Charset exists for UTF-8
     if (!contentToDownload.includes('<meta charset="utf-8"')) {
-       // Se for um fragmento, envolve em estrutura básica
        if (!contentToDownload.includes('<html')) {
           contentToDownload = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -442,7 +505,6 @@ ${contentToDownload}
 </body>
 </html>`;
        } else {
-          // Se já for HTML completo, tenta injetar no head
           contentToDownload = contentToDownload.replace('<head>', '<head>\n<meta charset="utf-8">');
        }
     }
@@ -458,8 +520,9 @@ ${contentToDownload}
     URL.revokeObjectURL(url);
   };
 
-  const handleVisualEdit = () => {
-    // Sincroniza edições manuais
+  // Sync edits in real-time
+  const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
+     setGeneratedHtml(e.currentTarget.innerHTML);
   };
 
   return (
@@ -474,7 +537,6 @@ ${contentToDownload}
         <div className="card config-panel">
           <h2>1. Estrutura & Templates</h2>
           
-          {/* 1.a Templates Gallery */}
           <div className="section-group">
             <label className="section-title">Galeria de Modelos Rápidos</label>
             <div className="template-grid">
@@ -494,7 +556,6 @@ ${contentToDownload}
 
           <div className="divider-text">OU</div>
 
-          {/* 1.b HTML Base Upload */}
           <div className="section-group">
             <label className="section-title">Upload de Arquivo Próprio</label>
             <div 
@@ -595,7 +656,7 @@ ${contentToDownload}
 
           <h2>3. Inteligência Artificial (Opcional)</h2>
           
-          {/* 4. Prompt Customization (New) */}
+          {/* 4. Prompt Customization */}
           <div className="section-group">
             <label className="section-title">Instruções para Otimização</label>
             <textarea
@@ -664,12 +725,13 @@ ${contentToDownload}
               <div className="visual-editor-wrapper">
                  <div className="visual-editor-notice">Modo Editor: Clique e digite para alterar o texto.</div>
                  <div 
+                    key={refreshKey} // Forces re-render when AI updates content
                     ref={editableDivRef}
                     className="email-paper"
                     contentEditable={true}
-                    onBlur={handleVisualEdit}
+                    onInput={handleInput} // Syncs text changes immediately
                     suppressContentEditableWarning={true}
-                    dangerouslySetInnerHTML={{ __html: generatedHtml }} // Initial render logic
+                    dangerouslySetInnerHTML={{ __html: generatedHtml }}
                  />
               </div>
             ) : (
@@ -678,6 +740,8 @@ ${contentToDownload}
                 value={editableDivRef.current?.innerHTML || generatedHtml}
                 onChange={(e) => {
                    setGeneratedHtml(e.target.value);
+                   // Manual update of ref not needed here as state drives textarea, 
+                   // but needed for switch back to visual
                    if(editableDivRef.current) editableDivRef.current.innerHTML = e.target.value;
                 }}
                 spellCheck={false}
