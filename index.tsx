@@ -424,12 +424,9 @@ const App: React.FC = () => {
 
       // --- PROTECTION LOGIC: HIDE IMAGE BASE64 ---
       // Sending huge base64 strings to LLM is bad. We replace it with a token.
-      const IMG_PLACEHOLDER = "<!-- ##PROTECTED_IMAGE## -->";
       let hasImage = false;
       
       if (imageBase64) {
-        // We try to find the image tag containing the base64 and replace the src, or the whole tag if easiest.
-        // Simplest strategy: If the content contains the exact base64 string, replace it.
         if (contentToProcess.includes(imageBase64)) {
             contentToProcess = contentToProcess.split(imageBase64).join("##IMG_DATA##");
             hasImage = true;
