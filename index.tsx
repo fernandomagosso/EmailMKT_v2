@@ -20,13 +20,6 @@ interface Template {
 
 // --- Constants & Templates ---
 
-const VIVO_COLORS = {
-  purple: '#660099',
-  lightPurple: '#A74AC7',
-  gray: '#f6f6f6',
-  white: '#ffffff'
-};
-
 const DEFAULT_TEMPLATES: Template[] = [
   {
     id: 'adjust',
@@ -172,6 +165,7 @@ const App: React.FC = () => {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [viewMode, setViewMode] = useState<'visual' | 'code'>('visual');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [renderKey, setRenderKey] = useState(0); // Force re-render trick for WYSIWYG
 
   // References
   const editableRef = useRef<HTMLDivElement>(null);
@@ -204,7 +198,7 @@ const App: React.FC = () => {
     if (imageData?.base64) {
       const imgTag = `<img src="${imageData.base64}" alt="Destaque" style="width: ${imageData.width}%; max-width: 100%; height: auto; display: block; margin: 20px auto; border-radius: 4px;" class="vivo-injected-img" />`;
       
-      // Attempt to place image intelligently if markers exist, else prepend/append or replace generic placeholders
+      // Attempt to place image intelligently if markers exist
       if (draft.includes('class="vivo-injected-img"')) {
         draft = draft.replace(/<img[^>]*class="vivo-injected-img"[^>]*>/g, imgTag);
       } else if (draft.includes('class="vivo-promo-hero"')) {
@@ -216,7 +210,7 @@ const App: React.FC = () => {
         draft = draft.replace('<h1', `${imgTag}<h1`);
       } else {
         // Fallback: inject after body open
-        draft = draft.replace('<body', `<body`); // no-op just to find body
+        draft = draft.replace('<body', `<body`); 
         const bodyIdx = draft.indexOf('>', draft.indexOf('<body')) + 1;
         if (bodyIdx > 0) {
            draft = draft.slice(0, bodyIdx) + imgTag + draft.slice(bodyIdx);
@@ -225,6 +219,7 @@ const App: React.FC = () => {
     }
 
     setHtmlPreview(draft);
+    setRenderKey(prev => prev + 1);
   }, [templateContent, variables, imageData]);
 
   // --- Handlers ---
@@ -314,7 +309,8 @@ const App: React.FC = () => {
     setErrorMsg(null);
 
     try {
-      // 1. Protect Image Data (Token Saving)
+      // 1. Protect Image Data (Token Saving Strategy)
+      // This is crucial to prevent the AI from hallucinating broken Base64 strings or truncated HTML
       let contentToProcess = editableRef.current?.innerHTML || htmlPreview;
       let placeholder = "";
       
@@ -339,7 +335,7 @@ const App: React.FC = () => {
         1. Mantenha a estrutura HTML intacta (tags, classes, estilos).
         2. NÃO remova o placeholder '${placeholder}' se ele existir no src da imagem.
         3. Use acentuação normal (UTF-8), não use entidades HTML como &atilde;.
-        4. Retorne APENAS o código HTML.
+        4. Retorne APENAS o código HTML limpo.
 
         Saída:
       `;
@@ -363,6 +359,7 @@ const App: React.FC = () => {
         editableRef.current.innerHTML = responseText;
       }
       setHtmlPreview(responseText); // Sync state
+      setRenderKey(prev => prev + 1); // Force re-render of key
 
     } catch (e: any) {
       console.error(e);
@@ -528,18 +525,20 @@ const App: React.FC = () => {
           {viewMode === 'visual' ? (
             <div className="visual-canvas">
               {!htmlPreview && <div className="empty-state">Selecione um template para começar</div>}
-              <div 
-                ref={editableRef}
-                className="email-content-editable"
-                contentEditable={true}
-                suppressContentEditableWarning={true}
-                dangerouslySetInnerHTML={{ __html: htmlPreview }}
-                onInput={(e) => {
-                  // Sync manual edits back to state loosely, mainly for download
-                  // Note: Full state sync on every keystroke in contentEditable can handle caret jumps poorly, 
-                  // but we need it for download. We rely on ref for the "truth" during download/AI.
-                }}
-              />
+              {htmlPreview && (
+                <div 
+                  key={renderKey} // Force re-render when state changes significantly
+                  ref={editableRef}
+                  className="email-content-editable"
+                  contentEditable={true}
+                  suppressContentEditableWarning={true}
+                  dangerouslySetInnerHTML={{ __html: htmlPreview }}
+                  onInput={(e) => {
+                    // We don't strictly set state here to avoid cursor jumps,
+                    // but we ensure the ref used for download is up to date.
+                  }}
+                />
+              )}
             </div>
           ) : (
              <textarea 
@@ -547,7 +546,7 @@ const App: React.FC = () => {
                value={editableRef.current?.innerHTML || htmlPreview} 
                onChange={(e) => {
                  setHtmlPreview(e.target.value);
-                 if (editableRef.current) editableRef.current.innerHTML = e.target.value;
+                 // We don't update ref here immediately to avoid circular logic until visual mode is back
                }}
              />
           )}
