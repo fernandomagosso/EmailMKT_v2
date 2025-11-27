@@ -304,7 +304,7 @@ const App: React.FC = () => {
     if (!htmlPreview) return;
     
     // Safety check for API Key
-    const apiKey = process.env.API_KEY || window.process?.env?.API_KEY;
+    const apiKey = process.env.API_KEY;
     if (!apiKey) {
       setErrorMsg("Chave de API não encontrada.");
       return;
@@ -324,8 +324,7 @@ const App: React.FC = () => {
       }
 
       const ai = new GoogleGenAI({ apiKey });
-      const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
-
+      
       const prompt = `
         VOCÊ É: Especialista em Email Marketing e UX Writing da Vivo.
         OBJETIVO: Melhorar o conteúdo do HTML abaixo.
@@ -345,8 +344,11 @@ const App: React.FC = () => {
         Saída:
       `;
 
-      const result = await model.generateContent(prompt);
-      let responseText = result.response.text();
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt
+      });
+      let responseText = response.text || "";
       
       // Clean markdown code blocks if present
       responseText = responseText.replace(/```html/g, '').replace(/```/g, '').trim();
