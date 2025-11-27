@@ -2,7 +2,7 @@ import React, { useState, useRef, ChangeEvent, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { GoogleGenAI } from "@google/genai";
 
-// Declaração para garantir que o TypeScript entenda o process.env injetado
+// Declaração para garantir que o TypeScript entenda o process.env injetado ou o polyfill
 declare global {
   interface Window {
     process?: {
@@ -27,6 +27,7 @@ interface Template {
 }
 
 // --- Predefined Templates (Vivo Identity) ---
+// Classes prefixadas com 'vivo-' para evitar conflitos de CSS com o app principal
 const PREDEFINED_TEMPLATES: Template[] = [
   {
     id: 'adjust',
@@ -37,14 +38,12 @@ const PREDEFINED_TEMPLATES: Template[] = [
 <head>
 <meta charset="UTF-8">
 <style>
-  /* Prefixing classes to avoid conflict with main app styles */
   .vivo-email-body { margin: 0; padding: 0; font-family: 'Arial', sans-serif; background-color: #f6f6f6; color: #333; }
   .vivo-email-container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-top: 5px solid #660099; }
   .vivo-email-header { padding: 30px 40px; border-bottom: 1px solid #eee; }
   .vivo-email-logo { color: #660099; font-size: 24px; font-weight: bold; }
   .vivo-email-content { padding: 40px; line-height: 1.6; }
   .vivo-alert-box { background-color: #f3e5f5; border-left: 4px solid #A74AC7; padding: 15px; margin: 20px 0; border-radius: 4px; }
-  .vivo-old-price { text-decoration: line-through; color: #999; }
   .vivo-new-price { font-size: 1.2em; font-weight: bold; color: #660099; }
   .vivo-email-footer { background-color: #333; color: #fff; padding: 20px; text-align: center; font-size: 12px; }
 </style>
@@ -263,7 +262,6 @@ const App: React.FC = () => {
       }
     };
     reader.onerror = () => setError("Falha ao ler o arquivo HTML.");
-    // Force UTF-8 to avoid special character issues
     reader.readAsText(file, "UTF-8");
   };
 
@@ -294,7 +292,6 @@ const App: React.FC = () => {
       const text = target.result;
       
       if (typeof text === "string") {
-        // Parse format "Key: Value" or "Key=Value" per line
         const lines = text.split(/\r?\n/);
         const newVars: Variable[] = [];
         
@@ -329,7 +326,6 @@ const App: React.FC = () => {
       }
     };
     reader.onerror = () => setError("Falha ao ler o arquivo de variáveis.");
-    // Force UTF-8
     reader.readAsText(file, "UTF-8");
   };
 
@@ -374,12 +370,9 @@ const App: React.FC = () => {
     if (imageBase64) {
       const imgTag = `<img src="${imageBase64}" style="width: ${imageWidth}%; max-width: 100%; height: auto; display: block; margin: 20px auto;" alt="Destaque" class="injected-img" />`;
       
-      // Procura se já existe uma imagem injetada anteriormente para substituir
       if (currentDraft.includes('class="injected-img"')) {
-         // Regex simples para substituir tag img existente com essa classe
          currentDraft = currentDraft.replace(/<img[^>]*class="injected-img"[^>]*>/g, imgTag);
       } else {
-        // Inserção inteligente
         if (currentDraft.includes('<div class="main-content">')) {
            currentDraft = currentDraft.replace('<div class="main-content">', `<div class="main-content">${imgTag}`);
         } else if (currentDraft.includes('class="vivo-promo-banner"')) {
@@ -395,7 +388,6 @@ const App: React.FC = () => {
     }
 
     setGeneratedHtml(currentDraft);
-    // Increment key to force re-render of div
     setRefreshKey(prev => prev + 1);
   }, [htmlTemplate, variables, imageBase64, imageWidth]);
 
@@ -406,6 +398,7 @@ const App: React.FC = () => {
       return;
     }
 
+    // Access API Key safely
     const apiKey = typeof process !== 'undefined' && process.env && process.env.API_KEY
       ? process.env.API_KEY 
       : window.process?.env?.API_KEY;
@@ -421,13 +414,10 @@ const App: React.FC = () => {
     try {
       const ai = new GoogleGenAI({ apiKey });
       
-      // CAPTURE CONTENT FROM EDITOR
       let contentToProcess = editableDivRef.current?.innerHTML || generatedHtml;
 
       // --- PROTECTION LOGIC: HIDE IMAGE BASE64 ---
-      // Sending huge base64 strings to LLM is bad. We replace it with a token.
       let hasImage = false;
-      
       if (imageBase64) {
         if (contentToProcess.includes(imageBase64)) {
             contentToProcess = contentToProcess.split(imageBase64).join("##IMG_DATA##");
@@ -471,7 +461,7 @@ const App: React.FC = () => {
       }
 
       setGeneratedHtml(cleanHtml);
-      setRefreshKey(prev => prev + 1); // Force div refresh
+      setRefreshKey(prev => prev + 1);
 
     } catch (err: unknown) {
       console.error(err);
@@ -489,7 +479,6 @@ const App: React.FC = () => {
     let contentToDownload = editableDivRef.current?.innerHTML || generatedHtml;
     if (!contentToDownload) return;
     
-    // Ensure Meta Charset exists for UTF-8
     if (!contentToDownload.includes('<meta charset="utf-8"')) {
        if (!contentToDownload.includes('<html')) {
           contentToDownload = `<!DOCTYPE html>
@@ -739,8 +728,6 @@ ${contentToDownload}
                 value={editableDivRef.current?.innerHTML || generatedHtml}
                 onChange={(e) => {
                    setGeneratedHtml(e.target.value);
-                   // Manual update of ref not needed here as state drives textarea, 
-                   // but needed for switch back to visual
                    if(editableDivRef.current) editableDivRef.current.innerHTML = e.target.value;
                 }}
                 spellCheck={false}

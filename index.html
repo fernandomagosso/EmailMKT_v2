@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     
-    <!-- Polyfill seguro para process.env (Garante que o app não quebre se process não existir) -->
+    <!-- Polyfill seguro para process.env (Garante compatibilidade em qualquer ambiente browser) -->
     <script>
       if (typeof window.process === 'undefined') {
         window.process = { env: {} };
