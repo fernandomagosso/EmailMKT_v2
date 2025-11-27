@@ -3,21 +3,19 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Vivo Marketing CX - Gerador de E-mail</title>
+    <title>Vivo Marketing Builder</title>
+    
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     
-    <!-- Polyfill seguro para process.env (Garante compatibilidade em qualquer ambiente browser) -->
+    <!-- Environment Polyfill for Web Compatibility -->
     <script>
-      if (typeof window.process === 'undefined') {
-        window.process = { env: {} };
-      }
-      if (!window.process.env) {
-        window.process.env = {};
-      }
+      window.process = window.process || { env: {} };
     </script>
 
+    <!-- Robust Import Map (Reference: Diario de Trader V3) -->
     <script type="importmap">
 {
   "imports": {
